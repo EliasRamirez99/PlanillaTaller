@@ -10,14 +10,21 @@
 
   const COLS_EQ = ["total", "disponible", "reparacion", "demora", "observaciones"];
 
-  // ---------- Desplegables ----------
-  poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
-  poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
-  enlazarSemana("semana", "desde", "hasta");
+  cargarExtras(function () {
+    // ---------- Desplegables ----------
+    poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+    poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
+    enlazarSemana("semana", "desde", "hasta");
 
-  // ---------- Grilla de equipos (etiqueta = nombre del equipo) ----------
-  const filasEquipos = LISTADOS.equiposEstacionarios.map((eq) => [eq, eq]);
-  construirFilasEtiqueta("tabla-equipos", filasEquipos, COLS_EQ);
+    // ---------- Grilla de equipos (etiqueta = nombre del equipo) ----------
+    const filasEquipos = LISTADOS.equiposEstacionarios.map((eq) => [eq, eq]);
+    construirFilasEtiqueta("tabla-equipos", filasEquipos, COLS_EQ);
+
+    conectarForm(recolectar, validar, function () {
+      $("form").reset();
+      $("desde").value = $("hasta").value = "";
+    });
+  });
 
   // ---------- Datos / validación ----------
   function recolectar() {
@@ -40,9 +47,4 @@
     if (d.equipos.length === 0) return "Cargá al menos un equipo.";
     return null;
   }
-
-  conectarForm(recolectar, validar, function () {
-    $("form").reset();
-    $("desde").value = $("hasta").value = "";
-  });
 })();

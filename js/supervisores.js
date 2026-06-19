@@ -10,24 +10,33 @@
 
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
-  // ---------- Desplegables ----------
-  poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
-  poblarSelect($("supervisor"), LISTADOS.supervisores, (s) => s[0], (s) => s[0]);
-  poblarSelect($("obra"), LISTADOS.obras, (o) => o[1], (o) => `${o[1]}  (${o[0]})`);
+  // Trae listados agregados desde Ajustes y recién ahí arma el formulario.
+  cargarExtras(function () {
+    // ---------- Desplegables ----------
+    poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+    poblarSelect($("supervisor"), LISTADOS.supervisores, (s) => s[0], (s) => s[0]);
+    poblarSelect($("obra"), LISTADOS.obras, (o) => o[1], (o) => `${o[1]}  (${o[0]})`);
 
-  // ---------- Autocompletado ----------
-  enlazarSemana("semana", "desde", "hasta");
-  $("supervisor").addEventListener("change", function () {
-    const s = LISTADOS.supervisores.find((x) => x[0] === this.value);
-    $("ubicacion").value = s ? s[1] : "";
-    $("taller").value = s ? s[2] : "";
+    // ---------- Autocompletado ----------
+    enlazarSemana("semana", "desde", "hasta");
+    $("supervisor").addEventListener("change", function () {
+      const s = LISTADOS.supervisores.find((x) => x[0] === this.value);
+      $("ubicacion").value = s ? s[1] : "";
+      $("taller").value = s ? s[2] : "";
+    });
+
+    // ---------- Tablas dinámicas (autocompletan los contadores) ----------
+    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n));
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
+    wireAgregar("add-repuestos", repCtrl);
+    wireAgregar("add-necesidades", necCtrl);
+
+    conectarForm(recolectar, validar, function () {
+      $("form").reset();
+      $("desde").value = $("hasta").value = $("ubicacion").value = $("taller").value = "";
+      $("espera_repuesto").value = $("necesidades_cant").value = "0";
+    });
   });
-
-  // ---------- Tablas dinámicas (autocompletan los contadores) ----------
-  const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n));
-  const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
-  wireAgregar("add-repuestos", repCtrl);
-  wireAgregar("add-necesidades", necCtrl);
 
   // ---------- Datos / validación ----------
   function recolectar() {
@@ -60,10 +69,4 @@
     if (!d.supervisor) return "Elegí el supervisor.";
     return null;
   }
-
-  conectarForm(recolectar, validar, function () {
-    $("form").reset();
-    $("desde").value = $("hasta").value = $("ubicacion").value = $("taller").value = "";
-    $("espera_repuesto").value = $("necesidades_cant").value = "0";
-  });
 })();

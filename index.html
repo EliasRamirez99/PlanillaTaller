@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <!-- Pedido de clave de la planilla seleccionada -->
+    <!-- Pedido de clave de la planilla / sección seleccionada -->
     <div id="gate" class="gate" style="display:none">
       <h3>Planilla: <span id="gate-title"></span></h3>
       <p>Ingresá la clave de tu sector para continuar.</p>
@@ -49,10 +49,29 @@
       </div>
       <div class="status" id="gate-status"></div>
     </div>
+
+    <div class="toolbar">
+      <button type="button" class="ghost" id="btn-ajustes">⚙ Ajustes (listados)</button>
+      <button type="button" class="ghost" id="btn-recargar">↻ Actualizar historial</button>
+    </div>
+
+    <!-- Historial de cargas -->
+    <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
+    <div class="status" id="historial-status">Cargando…</div>
+    <div id="historial"></div>
+
+    <!-- Modal de detalle -->
+    <div id="detalle" class="modal" style="display:none">
+      <div class="modal-box">
+        <button type="button" class="modal-close" id="detalle-close" title="Cerrar">×</button>
+        <div id="detalle-body"></div>
+      </div>
+    </div>
   </div>
 
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/index.js"></script>
+  <script src="js/historial.js"></script>
 </body>
 </html>

@@ -91,11 +91,30 @@ Opción con API (gspread, recomendada a futuro): ver comentarios del mismo archi
 
 ---
 
+## Inicio: Historial y Ajustes
+
+- **Historial de planillas cargadas:** en el inicio se listan las cargas (leídas
+  de la Sheet). Clic en una fila → se ve el detalle completo. Es abierto.
+- **Ajustes (botón ⚙):** pide la **clave Admin**. Permite agregar datos a los
+  listados (mecánicos, pañoleros, supervisores, obras, semanas). Lo agregado se
+  guarda en la pestaña `cfg_listados` y aparece en los formularios al recargarlos.
+
 ## Tareas de mantenimiento
 
-- **Alta/baja de personal u obras:** editá `js/listados.js` y subí el cambio.
-- **Cambiar una clave de sector:** editá `const CLAVES` en el Apps Script y
-  volvé a implementar (**Implementar → Gestionar implementaciones → editar**).
+- **Alta/baja de personal u obras:** lo más cómodo es **Ajustes** (en la web).
+  Los valores base siguen en `js/listados.js` (editá ahí para cambios masivos).
+- **Cambiar una clave (sector o Admin):** editá `const CLAVES` en el Apps Script
+  y **volvé a implementar** (ver abajo).
+
+## ⚠️ Cada vez que cambie `apps-script/Codigo.gs`
+
+El Apps Script desplegado NO se actualiza solo. Después de pegar el nuevo código:
+
+1. Apps Script → **Implementar → Gestionar implementaciones**.
+2. Tocá el **lápiz** (editar) de tu implementación.
+3. **Versión: Nueva versión** → **Implementar**.
+
+La URL `/exec` queda igual; sólo se actualiza el código.
 
 ---
 

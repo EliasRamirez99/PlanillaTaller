@@ -18,10 +18,12 @@
    ============================================================ */
 
 // 🔑 CAMBIÁ ESTAS CLAVES por las reales y compartilas con cada sector.
+// "Admin" es la clave para entrar a Ajustes (editar los listados).
 const CLAVES = {
   "Taller":  "taller-2026",
   "Almacen": "almacen-2026",
   "Panol":   "panol-2026",
+  "Admin":   "admin-2026",
 };
 
 // Columnas reutilizadas.
@@ -31,18 +33,38 @@ const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
 const TRANSF_KEYS = ["720", "745", "758", "760", "base7"];
 const EQ_COLS = ["total", "disponible", "reparacion", "demora", "observaciones"];
 
+// Cantidad de columnas de cada listado editable desde Ajustes.
+const LISTADO_COLS = {
+  supervisores: 3, // nombre, ubicacion, taller
+  mecanicos: 3,    // nombre, ubicacion, taller
+  panoleros: 3,    // nombre, ubicacion, panol
+  obras: 2,        // ubicacion, obra
+  semanas: 3,      // semana, desde, hasta
+};
+
 function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
 
-    // --- validar clave de sector ---
-    const claveOk = CLAVES[d.sector];
+    // --- lecturas abiertas (no requieren clave) ---
+    if (d.accion === "historial") return json({ ok: true, datos: leerHistorial() });
+    if (d.accion === "listados_extra") return json({ ok: true, datos: leerListadosExtra() });
+
+    // --- validar clave (sector, o Admin para Ajustes) ---
+    const sectorClave = (d.accion === "agregar_listado") ? "Admin" : d.sector;
+    const claveOk = CLAVES[sectorClave];
     if (!claveOk || d.clave !== claveOk) {
       return json({ ok: false, error: "clave" });
     }
 
     // El inicio sólo pregunta si la clave es correcta (no guarda nada).
     if (d.accion === "validar") {
+      return json({ ok: true });
+    }
+
+    // Agregar un dato a un listado (desde Ajustes, con clave Admin).
+    if (d.accion === "agregar_listado") {
+      agregarListado(d);
       return json({ ok: true });
     }
 
@@ -126,6 +148,96 @@ function guardarAlmacen(d) {
     fila.push(n.necesidad || "");
   }
   sh.appendRow(fila);
+}
+
+/* ---------------- Historial (lectura de cargas) ---------------- */
+function leerHistorial() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const out = [];
+
+  // Supervisores y Almacén: 1 fila = 1 carga.
+  ["Supervisores", "Almacen"].forEach((t) => {
+    const sh = ss.getSheetByName(t);
+    if (!sh || sh.getLastRow() < 2) return;
+    const data = sh.getDataRange().getValues();
+    const head = data[0];
+    for (let i = 1; i < data.length; i++) {
+      out.push({ planilla: t, fila: filaObj(head, data[i]) });
+    }
+  });
+
+  // Estacionarios: varias filas (1 por equipo) = 1 carga -> agrupar por timestamp.
+  const she = ss.getSheetByName("Estacionarios");
+  if (she && she.getLastRow() >= 2) {
+    const data = she.getDataRange().getValues();
+    const head = data[0];
+    const grupos = {};
+    for (let i = 1; i < data.length; i++) {
+      const o = filaObj(head, data[i]);
+      const k = String(o.timestamp);
+      if (!grupos[k]) {
+        grupos[k] = {
+          planilla: "Estacionarios",
+          fila: {
+            timestamp: o.timestamp, semana: o.semana, desde: o.desde,
+            hasta: o.hasta, ubicacion: o.ubicacion, cant_panoleros: o.cant_panoleros,
+          },
+          equipos: [],
+        };
+      }
+      grupos[k].equipos.push({
+        equipo: o.equipo, total: o.total, disponible: o.disponible,
+        reparacion: o.reparacion, demora: o.demora, observaciones: o.observaciones,
+      });
+    }
+    Object.keys(grupos).forEach((k) => out.push(grupos[k]));
+  }
+
+  // Más recientes primero.
+  out.sort((a, b) => new Date(b.fila.timestamp) - new Date(a.fila.timestamp));
+  return out;
+}
+
+function filaObj(head, row) {
+  const o = {};
+  head.forEach((h, j) => { o[h] = row[j]; });
+  return o;
+}
+
+/* ---------------- Listados (Ajustes) ---------------- */
+function hojaListados() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName("cfg_listados");
+  if (!sh) {
+    sh = ss.insertSheet("cfg_listados");
+    sh.appendRow(["timestamp", "tipo", "v1", "v2", "v3"]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+// Devuelve sólo lo agregado desde Ajustes (los valores base viven en js/listados.js).
+function leerListadosExtra() {
+  const sh = hojaListados();
+  const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [] };
+  if (sh.getLastRow() < 2) return out;
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const tipo = data[i][1];
+    if (!out[tipo]) continue;
+    const n = LISTADO_COLS[tipo] || 3;
+    const fila = [];
+    for (let c = 0; c < n; c++) fila.push(data[i][2 + c]);
+    out[tipo].push(fila);
+  }
+  return out;
+}
+
+function agregarListado(d) {
+  if (!LISTADO_COLS[d.tipo]) throw new Error("tipo de listado invalido: " + d.tipo);
+  const sh = hojaListados();
+  const f = d.fila || [];
+  sh.appendRow([new Date(), d.tipo, f[0] || "", f[1] || "", f[2] || ""]);
 }
 
 // Devuelve la pestaña; la crea con encabezados si no existe.

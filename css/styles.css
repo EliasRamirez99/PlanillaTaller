@@ -188,3 +188,49 @@ input.mini {
   width: 70px; padding: 4px 8px; border: 1px solid var(--azul-borde);
   border-radius: 6px; background: #eef2f6; text-align: center;
 }
+
+/* ---- Toolbar (inicio) ---- */
+.toolbar { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ---- Historial ---- */
+table.grid.hist tbody tr { cursor: pointer; }
+table.grid.hist tbody tr:hover { background: #eef6ff; }
+table.grid.hist td { padding: 8px; }
+table.grid.hist td.ver { color: #2b6cb0; font-weight: 600; white-space: nowrap; text-align: right; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+.badge.b-Supervisores { background: #dbeafe; color: #1e40af; }
+.badge.b-Estacionarios { background: #dcfce7; color: #166534; }
+.badge.b-Almacen { background: #fef3c7; color: #92400e; }
+
+/* ---- Modal de detalle ---- */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 30px 16px; z-index: 50; overflow: auto;
+}
+.modal-box {
+  background: #fff; border-radius: 10px; max-width: 780px; width: 100%;
+  padding: 22px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.modal-close {
+  position: absolute; top: 8px; right: 12px; border: none; background: transparent;
+  font-size: 26px; line-height: 1; cursor: pointer; color: #666;
+}
+.modal-box h3 { margin: 0 0 8px; color: var(--verde-osc); }
+.modal-box h4 { margin: 14px 0 4px; font-size: 14px; }
+
+.kvs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 16px; margin: 8px 0; }
+.kv { font-size: 13px; display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dashed #eee; padding: 3px 0; }
+.kv span { color: #666; }
+.kv b { text-align: right; }
+
+table.grid.det th, table.grid.det td { font-size: 12px; padding: 4px 6px; }
+table.grid.det td { background: #fff; }
+
+/* ---- Ajustes: fila de alta ---- */
+.add-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.add-row input {
+  padding: 8px 10px; border: 1px solid var(--azul-borde); border-radius: 6px;
+  background: var(--azul-input); font-size: 14px; min-width: 140px;
+}
+button.primary.small { padding: 8px 16px; font-size: 14px; }

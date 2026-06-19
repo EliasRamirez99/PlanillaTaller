@@ -31,6 +31,18 @@
     });
   });
 
+  // Botón de Ajustes -> pide la clave de Admin con el mismo panel.
+  $("btn-ajustes").addEventListener("click", () => {
+    document.querySelectorAll(".card").forEach((c) => c.classList.remove("sel"));
+    seleccion = { sector: "Admin", page: "ajustes.html", label: "Ajustes (listados)" };
+    gTitle.textContent = seleccion.label;
+    gClave.value = "";
+    setStatus("", "");
+    gate.style.display = "block";
+    gClave.focus();
+    gate.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
   async function acceder() {
     if (!seleccion) return;
     const clave = gClave.value.trim();

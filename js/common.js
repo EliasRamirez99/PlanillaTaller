@@ -42,6 +42,29 @@ async function validarClave(sector, clave) {
   }
 }
 
+// Trae los datos agregados desde Ajustes y los suma a LISTADOS, luego llama cb().
+// Si no hay URL o falla, sigue con los valores por defecto (no bloquea el form).
+function cargarExtras(cb) {
+  if (typeof LISTADOS === "undefined" || !CONFIG.APPS_SCRIPT_URL) { cb(); return; }
+  fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ accion: "listados_extra" }),
+  })
+    .then((r) => r.json())
+    .then((out) => {
+      if (out && out.ok && out.datos) {
+        Object.keys(out.datos).forEach((tipo) => {
+          if (Array.isArray(LISTADOS[tipo]) && Array.isArray(out.datos[tipo])) {
+            out.datos[tipo].forEach((f) => LISTADOS[tipo].push(f));
+          }
+        });
+      }
+      cb();
+    })
+    .catch(() => cb());
+}
+
 // Lee la sesión guardada al pasar la clave en el inicio.
 // Si no coincide con el sector esperado, redirige al inicio (refuerza el acceso).
 function obtenerSesion(sectorEsperado) {

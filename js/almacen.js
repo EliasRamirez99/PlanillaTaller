@@ -25,20 +25,28 @@
     ["base7", "Base 7"],
   ];
 
-  // ---------- Desplegables ----------
-  poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
-  poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
-  enlazarSemana("semana", "desde", "hasta");
+  cargarExtras(function () {
+    // ---------- Desplegables ----------
+    poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+    poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
+    enlazarSemana("semana", "desde", "hasta");
 
-  // ---------- Tablas fijas ----------
-  construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
-  construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
+    // ---------- Tablas fijas ----------
+    construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
+    construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
 
-  // ---------- Tablas dinámicas (autocompletan los contadores) ----------
-  const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("repuesto_en_espera").value = n));
-  const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
-  wireAgregar("add-repuestos", repCtrl);
-  wireAgregar("add-necesidades", necCtrl);
+    // ---------- Tablas dinámicas (autocompletan los contadores) ----------
+    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("repuesto_en_espera").value = n));
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
+    wireAgregar("add-repuestos", repCtrl);
+    wireAgregar("add-necesidades", necCtrl);
+
+    conectarForm(recolectar, validar, function () {
+      $("form").reset();
+      $("desde").value = $("hasta").value = "";
+      $("repuesto_en_espera").value = $("necesidades_cant").value = "0";
+    });
+  });
 
   // ---------- Datos / validación ----------
   function recolectar() {
@@ -65,10 +73,4 @@
     if (!d.ubicacion) return "Elegí la ubicación.";
     return null;
   }
-
-  conectarForm(recolectar, validar, function () {
-    $("form").reset();
-    $("desde").value = $("hasta").value = "";
-    $("repuesto_en_espera").value = $("necesidades_cant").value = "0";
-  });
 })();
