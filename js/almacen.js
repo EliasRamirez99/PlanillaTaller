@@ -5,6 +5,9 @@
   "use strict";
 
   const SECTOR = "Almacen";
+  const sesion = obtenerSesion(SECTOR);
+  if (!sesion) return;
+
   const COLS3 = ["total", "items", "repuestos"];
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
@@ -27,18 +30,22 @@
   poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
   enlazarSemana("semana", "desde", "hasta");
 
-  // ---------- Tablas ----------
+  // ---------- Tablas fijas ----------
   construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
   construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
-  construirFilas("tabla-repuestos", 10, COLS_REP);
-  construirFilas("tabla-necesidades", 5, ["necesidad"]);
+
+  // ---------- Tablas dinámicas (autocompletan los contadores) ----------
+  const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("repuesto_en_espera").value = n));
+  const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
+  wireAgregar("add-repuestos", repCtrl);
+  wireAgregar("add-necesidades", necCtrl);
 
   // ---------- Datos / validación ----------
   function recolectar() {
     return {
       sector: SECTOR,
       planilla: "Almacen",
-      clave: $("clave").value,
+      clave: sesion.clave,
       semana: $("semana").value,
       desde: $("desde").value,
       hasta: $("hasta").value,
@@ -54,15 +61,14 @@
   }
 
   function validar(d) {
-    if (!d.clave) return "Ingresá la clave del sector.";
     if (!d.semana) return "Elegí la semana.";
     if (!d.ubicacion) return "Elegí la ubicación.";
     return null;
   }
 
-  // ---------- Conectar ----------
   conectarForm(recolectar, validar, function () {
     $("form").reset();
     $("desde").value = $("hasta").value = "";
+    $("repuesto_en_espera").value = $("necesidades_cant").value = "0";
   });
 })();

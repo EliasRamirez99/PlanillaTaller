@@ -17,14 +17,6 @@
     <div class="titulo">PLANILLA DE RESUMEN SEMANAL PARA SUPERVISORES</div>
 
     <form id="form">
-      <!-- Clave de sector -->
-      <div class="clave-box">
-        <div class="field">
-          <label for="clave">Clave del sector (Taller) *</label>
-          <input type="password" id="clave" autocomplete="off" placeholder="Solicitar a administración" />
-        </div>
-      </div>
-
       <!-- Cabecera -->
       <div class="card-form">
         <h2>Datos generales</h2>
@@ -74,8 +66,8 @@
           <div class="field"><label for="tareas">N° Tareas Realizadas</label><input type="number" id="tareas" min="0" /></div>
           <div class="field"><label for="en_reparacion">En Reparación</label><input type="number" id="en_reparacion" min="0" /></div>
           <div class="field"><label for="tercerizado">Tercerizado</label><input type="number" id="tercerizado" min="0" /></div>
-          <div class="field"><label for="espera_repuesto">Espera de repuesto</label><input type="number" id="espera_repuesto" min="0" /></div>
-          <div class="field"><label for="necesidades_cant">Necesidades</label><input type="number" id="necesidades_cant" min="0" /></div>
+          <div class="field"><label for="espera_repuesto">Espera de repuesto <small>(automático)</small></label><input type="number" id="espera_repuesto" value="0" readonly /></div>
+          <div class="field"><label for="necesidades_cant">Necesidades <small>(automático)</small></label><input type="number" id="necesidades_cant" value="0" readonly /></div>
         </div>
       </div>
 
@@ -84,10 +76,11 @@
         <h2>Repuestos en espera</h2>
         <table class="grid" id="tabla-repuestos">
           <thead>
-            <tr><th>N°</th><th>Dominio</th><th>Repuesto</th><th>Tiempo de espera</th></tr>
+            <tr><th>N°</th><th>Dominio</th><th>Repuesto</th><th>Tiempo de espera</th><th></th></tr>
           </thead>
           <tbody></tbody>
         </table>
+        <button type="button" class="ghost small" id="add-repuestos">＋ Agregar repuesto</button>
       </div>
 
       <!-- Necesidades -->
@@ -95,18 +88,17 @@
         <h2>Necesidades</h2>
         <table class="grid" id="tabla-necesidades">
           <thead>
-            <tr><th>N°</th><th>Necesidad</th></tr>
+            <tr><th>N°</th><th>Necesidad</th><th></th></tr>
           </thead>
           <tbody></tbody>
         </table>
+        <button type="button" class="ghost small" id="add-necesidades">＋ Agregar necesidad</button>
       </div>
 
       <div class="actions">
         <button type="submit" class="primary">Enviar</button>
-        <button type="button" class="ghost" id="btn-preview">Ver datos (sin enviar)</button>
       </div>
       <div class="status" id="status"></div>
-      <div class="preview" id="preview" style="display:none"></div>
     </form>
   </div>
 

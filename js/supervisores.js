@@ -5,6 +5,9 @@
   "use strict";
 
   const SECTOR = "Taller";
+  const sesion = obtenerSesion(SECTOR); // redirige al inicio si no pasó la clave
+  if (!sesion) return;
+
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
   // ---------- Desplegables ----------
@@ -20,16 +23,18 @@
     $("taller").value = s ? s[2] : "";
   });
 
-  // ---------- Tablas ----------
-  construirFilas("tabla-repuestos", 5, COLS_REP);
-  construirFilas("tabla-necesidades", 5, ["necesidad"]);
+  // ---------- Tablas dinámicas (autocompletan los contadores) ----------
+  const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n));
+  const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
+  wireAgregar("add-repuestos", repCtrl);
+  wireAgregar("add-necesidades", necCtrl);
 
   // ---------- Datos / validación ----------
   function recolectar() {
     return {
       sector: SECTOR,
       planilla: "Supervisores",
-      clave: $("clave").value,
+      clave: sesion.clave,
       semana: $("semana").value,
       desde: $("desde").value,
       hasta: $("hasta").value,
@@ -51,15 +56,14 @@
   }
 
   function validar(d) {
-    if (!d.clave) return "Ingresá la clave del sector.";
     if (!d.semana) return "Elegí la semana.";
     if (!d.supervisor) return "Elegí el supervisor.";
     return null;
   }
 
-  // ---------- Conectar ----------
   conectarForm(recolectar, validar, function () {
     $("form").reset();
     $("desde").value = $("hasta").value = $("ubicacion").value = $("taller").value = "";
+    $("espera_repuesto").value = $("necesidades_cant").value = "0";
   });
 })();

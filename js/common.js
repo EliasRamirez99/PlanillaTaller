@@ -23,21 +23,40 @@ function enlazarSemana(selId, desdeId, hastaId) {
   });
 }
 
-// Construye filas numeradas (1..n) con inputs por columna.
-function construirFilas(tbodyId, filas, cols) {
-  const tb = document.querySelector(`#${tbodyId} tbody`);
-  for (let i = 1; i <= filas; i++) {
-    const tr = document.createElement("tr");
-    let html = `<td class="num">${i}</td>`;
-    cols.forEach((c) => {
-      html += `<td><input type="text" data-col="${c}" /></td>`;
+// ---------- Clave de sector / sesión ----------
+
+// Valida la clave contra el Apps Script. En modo demo (sin URL) acepta
+// cualquier clave no vacía.
+async function validarClave(sector, clave) {
+  if (!CONFIG.APPS_SCRIPT_URL) return !!clave;
+  try {
+    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion: "validar", sector: sector, clave: clave }),
     });
-    tr.innerHTML = html;
-    tb.appendChild(tr);
+    const out = await resp.json();
+    return !!out.ok;
+  } catch (e) {
+    return null; // error de conexión
   }
 }
 
-// Construye filas con una etiqueta fija en la 1ª columna (equipos, conceptos…).
+// Lee la sesión guardada al pasar la clave en el inicio.
+// Si no coincide con el sector esperado, redirige al inicio (refuerza el acceso).
+function obtenerSesion(sectorEsperado) {
+  const sector = sessionStorage.getItem("ops_sector");
+  const clave = sessionStorage.getItem("ops_clave");
+  if (!sector || sector !== sectorEsperado || !clave) {
+    location.replace("index.html");
+    return null;
+  }
+  return { sector, clave };
+}
+
+// ---------- Tablas ----------
+
+// Filas con etiqueta fija en la 1ª columna (equipos, conceptos…).
 // rows = [[clave, etiqueta], ...]
 function construirFilasEtiqueta(tbodyId, rows, cols) {
   const tb = document.querySelector(`#${tbodyId} tbody`);
@@ -45,15 +64,70 @@ function construirFilasEtiqueta(tbodyId, rows, cols) {
     const tr = document.createElement("tr");
     tr.dataset.clave = clave;
     let html = `<td class="label">${etiqueta}</td>`;
-    cols.forEach((c) => {
-      html += `<td><input type="text" data-col="${c}" /></td>`;
-    });
+    cols.forEach((c) => { html += `<td><input type="text" data-col="${c}" /></td>`; });
     tr.innerHTML = html;
     tb.appendChild(tr);
   });
 }
 
-// Lee tabla numerada -> array de objetos (sólo filas con algún dato).
+// Tabla DINÁMICA: arranca con 1 fila, se agregan/quitan con botones.
+// onCount(n) se llama con la cantidad de filas con datos (para autocompletar).
+// Devuelve { agregar } para enganchar el botón "Agregar".
+function tablaDinamica(tbodyId, cols, onCount) {
+  const tb = document.querySelector(`#${tbodyId} tbody`);
+
+  function renumerar() {
+    tb.querySelectorAll("tr").forEach((tr, i) => {
+      const n = tr.querySelector("td.num");
+      if (n) n.textContent = i + 1;
+    });
+  }
+  function contar() {
+    let n = 0;
+    tb.querySelectorAll("tr").forEach((tr) => {
+      const algo = cols.some((c) => {
+        const inp = tr.querySelector(`input[data-col="${c}"]`);
+        return inp && inp.value.trim();
+      });
+      if (algo) n++;
+    });
+    return n;
+  }
+  function notificar() { if (onCount) onCount(contar()); }
+
+  function agregar() {
+    const tr = document.createElement("tr");
+    let html = `<td class="num"></td>`;
+    cols.forEach((c) => { html += `<td><input type="text" data-col="${c}" /></td>`; });
+    html += `<td class="del"><button type="button" class="row-del" title="Quitar fila">×</button></td>`;
+    tr.innerHTML = html;
+    tb.appendChild(tr);
+    renumerar();
+    return tr;
+  }
+
+  tb.addEventListener("input", notificar);
+  tb.addEventListener("click", (e) => {
+    if (!e.target.classList.contains("row-del")) return;
+    if (tb.querySelectorAll("tr").length > 1) {
+      e.target.closest("tr").remove();
+    } else {
+      e.target.closest("tr").querySelectorAll("input").forEach((i) => (i.value = ""));
+    }
+    renumerar();
+    notificar();
+  });
+
+  agregar(); // primera fila
+  return { agregar };
+}
+
+// Engancha un botón "Agregar" a una tabla dinámica.
+function wireAgregar(btnId, ctrl) {
+  $(btnId).addEventListener("click", () => ctrl.agregar());
+}
+
+// Lee tabla (numerada o dinámica) -> array de objetos (sólo filas con dato).
 function leerTabla(tbodyId, cols) {
   const filas = [];
   document.querySelectorAll(`#${tbodyId} tbody tr`).forEach((tr) => {
@@ -100,6 +174,8 @@ function leerTablaEtiquetaArray(tbodyId, campoEtiqueta, cols) {
   return filas;
 }
 
+// ---------- Estado / envío ----------
+
 function hacerStatus(el) {
   return (msg, tipo) => {
     el.textContent = msg;
@@ -107,17 +183,11 @@ function hacerStatus(el) {
   };
 }
 
-// Envía los datos al Apps Script (o modo DEMO si no hay URL).
-async function enviarDatos(d, statusEl, previewEl, onOk) {
+async function enviarDatos(d, statusEl, onOk) {
   const setStatus = hacerStatus(statusEl);
 
   if (!CONFIG.APPS_SCRIPT_URL) {
-    previewEl.style.display = "block";
-    previewEl.textContent =
-      "MODO DEMO (todavía no configuraste APPS_SCRIPT_URL en js/config.js)\n" +
-      "Esto es lo que se enviaría a la Google Sheet:\n\n" +
-      JSON.stringify(Object.assign({}, d, { clave: "•••" }), null, 2);
-    setStatus("Modo demo: datos mostrados abajo, no se envió nada.", "ok");
+    setStatus("✅ (Demo) Datos válidos. Configurá APPS_SCRIPT_URL en js/config.js para enviar de verdad.", "ok");
     return;
   }
 
@@ -133,7 +203,7 @@ async function enviarDatos(d, statusEl, previewEl, onOk) {
       setStatus("✅ Enviado correctamente. ¡Gracias!", "ok");
       if (onOk) onOk();
     } else if (out.error === "clave") {
-      setStatus("❌ Clave de sector incorrecta.", "err");
+      setStatus("❌ Clave de sector incorrecta. Volvé a entrar desde el inicio.", "err");
     } else {
       setStatus("❌ Error: " + (out.error || "desconocido"), "err");
     }
@@ -142,28 +212,15 @@ async function enviarDatos(d, statusEl, previewEl, onOk) {
   }
 }
 
-// Muestra los datos sin enviar.
-function vistaPrevia(d, statusEl, previewEl) {
-  previewEl.style.display = "block";
-  previewEl.textContent = JSON.stringify(Object.assign({}, d, { clave: "•••" }), null, 2);
-  hacerStatus(statusEl)("Vista previa (no se envió nada).", "");
-}
-
-// Conecta los botones Enviar / Ver datos de un formulario.
+// Conecta el botón Enviar de un formulario.
 function conectarForm(recolectar, validar, onOk) {
   const status = $("status");
-  const preview = $("preview");
   const setStatus = hacerStatus(status);
-
   $("form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     const d = recolectar();
     const err = validar(d);
     if (err) { setStatus(err, "err"); return; }
-    enviarDatos(d, status, preview, onOk);
-  });
-
-  $("btn-preview").addEventListener("click", function () {
-    vistaPrevia(recolectar(), status, preview);
+    enviarDatos(d, status, onOk);
   });
 }

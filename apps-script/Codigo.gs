@@ -41,6 +41,11 @@ function doPost(e) {
       return json({ ok: false, error: "clave" });
     }
 
+    // El inicio sólo pregunta si la clave es correcta (no guarda nada).
+    if (d.accion === "validar") {
+      return json({ ok: true });
+    }
+
     switch (d.planilla) {
       case "Supervisores":  guardarSupervisores(d); break;
       case "Estacionarios": guardarEstacionarios(d); break;

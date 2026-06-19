@@ -156,3 +156,35 @@ button.ghost {
 }
 .back { display:inline-block; margin-bottom: 10px; color:#2b6cb0; text-decoration:none; font-size:14px; }
 .back:hover { text-decoration: underline; }
+
+/* ---- Selección de tarjeta + panel de clave (inicio) ---- */
+.card { cursor: pointer; }
+.card.sel { border-color: var(--verde-osc); box-shadow: 0 0 0 2px var(--verde-osc) inset; }
+
+.gate {
+  background: #fff; border: 1px solid var(--gris-borde); border-radius: 10px;
+  padding: 18px; margin-top: 18px; max-width: 440px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.gate h3 { margin: 0 0 4px; color: var(--verde-osc); }
+.gate p { margin: 0 0 10px; font-size: 14px; color: #555; }
+.gate .field { max-width: 280px; }
+
+/* ---- Botón agregar fila / chico ---- */
+button.ghost.small { padding: 7px 14px; font-size: 13px; margin-top: 8px; }
+
+/* ---- Columna y botón de eliminar fila ---- */
+table.grid td.del { width: 34px; text-align: center; background: #f7f7f7; }
+button.row-del {
+  border: none; background: transparent; color: var(--rojo);
+  font-size: 18px; line-height: 1; cursor: pointer; font-weight: 700; padding: 2px 6px;
+}
+button.row-del:hover { color: #7a1d12; }
+
+/* ---- Contadores automáticos ---- */
+.field label small { color: #888; font-weight: 400; }
+.auto-hint { margin: 8px 0 0; font-size: 13px; color: #555; }
+input.mini {
+  width: 70px; padding: 4px 8px; border: 1px solid var(--azul-borde);
+  border-radius: 6px; background: #eef2f6; text-align: center;
+}
