@@ -39,12 +39,16 @@ backend/leer_planillas.py  Lector en Python para tu análisis
 
 ---
 
-## Probarlo YA (modo demo, sin Google)
+## Cómo se usa
 
-1. Abrí `index.html` en el navegador (doble clic).
-2. Entrá a "Resumen Supervisores", completá y tocá **Enviar**.
-3. Como todavía no hay Google configurado, te muestra abajo los datos que
-   enviaría. Sirve para ver que todo funciona.
+1. El usuario abre el link y **elige su planilla** en el inicio.
+2. Aparece el **pedido de clave del sector**; si es correcta, entra a la planilla.
+   (En modo demo —sin Google configurado— cualquier clave no vacía entra.)
+3. Completa y toca **Enviar**. Las tablas de repuestos/necesidades arrancan con
+   una fila y se agregan con **＋ Agregar**; los totales se calculan solos.
+
+> En modo demo, **Enviar** sólo valida los datos (no manda nada). Cuando esté
+> configurado el Apps Script (pasos 2 y 3), cada carga cae en la Google Sheet.
 
 ---
 
