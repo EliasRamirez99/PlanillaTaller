@@ -120,6 +120,7 @@ table.grid th, table.grid td {
 table.grid th { background: var(--verde); font-weight: 600; }
 table.grid td input { width: 100%; border: none; background: transparent; padding: 6px; font-size: 13px; font-family: inherit; }
 table.grid td.num { width: 42px; text-align: center; background: #f0f0f0; font-weight: 600; }
+table.grid td.label { background: #f0f0f0; font-weight: 600; text-align: left; padding-left: 10px; white-space: nowrap; }
 
 /* ---- Botones / estado ---- */
 .actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }

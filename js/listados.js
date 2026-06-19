@@ -168,4 +168,31 @@ const LISTADOS = {
 
   // Tipos de taller (para filtros)
   talleres: ["Pesado", "Liviano", "Estacionario", "Vial y Carretones", "Campo", "Noche"],
+
+  // Equipos de la planilla de Estacionarios (en orden)
+  equiposEstacionarios: [
+    "GENERADORES 44KVA",
+    "GENERADORES 66KVA",
+    "GENERADORES 80KVA",
+    "GENERADORES 110KVA",
+    "COMPRESORES",
+    "MOTOSOLDADORES",
+    "CHULENGOS 1000L",
+    "CHULENGOS 1500L",
+    "CHULENGOS 1700L",
+    "CHULENGOS 2000L",
+    "CHULENGOS 5000L",
+    "MOCHILAS",
+    "MOCHILAS 200L",
+    "ZAPATO COMPACTADOR",
+    "RODILLOS COMPACTADOR",
+    "TORRES ILUMINARIAS",
+    "HOYADORA",
+    "MARTILLO HIDRAULICO",
+    "CARRO DE BAJADA",
+    "RIPPER",
+    "ZARANDE",
+    "AGUILONES",
+    "BALDES",
+  ],
 };

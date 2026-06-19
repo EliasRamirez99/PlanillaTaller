@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resumen Semanal — Equipos Estacionarios</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">OPS</span>
+      <span class="sub">Oilfield Production Services</span>
+    </div>
+
+    <a class="back" href="index.html">&larr; Volver</a>
+    <div class="titulo">PLANILLA DE RESUMEN SEMANAL DE EQUIPOS ESTACIONARIOS</div>
+
+    <form id="form">
+      <div class="clave-box">
+        <div class="field">
+          <label for="clave">Clave del sector (Pañol) *</label>
+          <input type="password" id="clave" autocomplete="off" placeholder="Solicitar a administración" />
+        </div>
+      </div>
+
+      <div class="card-form">
+        <h2>Datos generales</h2>
+        <div class="grid3">
+          <div class="field">
+            <label for="semana">Semana *</label>
+            <select id="semana"><option value="">— Elegir —</option></select>
+          </div>
+          <div class="field">
+            <label for="desde">Desde</label>
+            <input type="text" id="desde" readonly />
+          </div>
+          <div class="field">
+            <label for="hasta">Hasta</label>
+            <input type="text" id="hasta" readonly />
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="field">
+            <label for="ubicacion">Ubicación *</label>
+            <select id="ubicacion"><option value="">— Elegir —</option></select>
+          </div>
+          <div class="field">
+            <label for="cant_panoleros">Cantidad de Pañoleros</label>
+            <input type="number" id="cant_panoleros" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card-form">
+        <h2>Equipos</h2>
+        <table class="grid" id="tabla-equipos">
+          <thead>
+            <tr>
+              <th style="text-align:left">Equipo</th>
+              <th>Total</th>
+              <th>Disponible</th>
+              <th>Reparación</th>
+              <th>Tiempo de demora</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary">Enviar</button>
+        <button type="button" class="ghost" id="btn-preview">Ver datos (sin enviar)</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="preview" id="preview" style="display:none"></div>
+    </form>
+  </div>
+
+  <script src="js/listados.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/estacionarios.js"></script>
+</body>
+</html>

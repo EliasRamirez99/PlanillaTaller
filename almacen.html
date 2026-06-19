@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resumen Semanal — Supervisores</title>
+  <title>Resumen Semanal — Almacén</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -14,18 +14,16 @@
     </div>
 
     <a class="back" href="index.html">&larr; Volver</a>
-    <div class="titulo">PLANILLA DE RESUMEN SEMANAL PARA SUPERVISORES</div>
+    <div class="titulo">RESUMEN SEMANAL — PLANILLA ALMACÉN</div>
 
     <form id="form">
-      <!-- Clave de sector -->
       <div class="clave-box">
         <div class="field">
-          <label for="clave">Clave del sector (Taller) *</label>
+          <label for="clave">Clave del sector (Almacén) *</label>
           <input type="password" id="clave" autocomplete="off" placeholder="Solicitar a administración" />
         </div>
       </div>
 
-      <!-- Cabecera -->
       <div class="card-form">
         <h2>Datos generales</h2>
         <div class="grid3">
@@ -42,55 +40,66 @@
             <input type="text" id="hasta" readonly />
           </div>
         </div>
-        <div class="grid3" style="margin-top:10px">
-          <div class="field">
-            <label for="supervisor">Supervisor *</label>
-            <select id="supervisor"><option value="">— Elegir —</option></select>
-          </div>
-          <div class="field">
-            <label for="ubicacion">Ubicación</label>
-            <input type="text" id="ubicacion" readonly />
-          </div>
-          <div class="field">
-            <label for="taller">Taller</label>
-            <input type="text" id="taller" readonly />
-          </div>
-        </div>
         <div class="grid2" style="margin-top:10px">
           <div class="field">
-            <label for="obra">Obra</label>
-            <select id="obra"><option value="">— Elegir —</option></select>
+            <label for="ubicacion">Ubicación *</label>
+            <select id="ubicacion"><option value="">— Elegir —</option></select>
+          </div>
+          <div class="field">
+            <label for="cant_panoleros">Cantidad de Pañoleros</label>
+            <input type="number" id="cant_panoleros" min="0" />
           </div>
         </div>
       </div>
 
-      <!-- Indicadores -->
       <div class="card-form">
-        <h2>Indicadores de la semana</h2>
-        <div class="grid3">
-          <div class="field"><label for="cant_mecanicos">Cantidad de Mecánicos</label><input type="number" id="cant_mecanicos" min="0" /></div>
-          <div class="field"><label for="km">Kilómetros recorridos</label><input type="number" id="km" min="0" /></div>
-          <div class="field"><label for="ordenes">N° Órdenes Realizadas</label><input type="number" id="ordenes" min="0" /></div>
-          <div class="field"><label for="tareas">N° Tareas Realizadas</label><input type="number" id="tareas" min="0" /></div>
-          <div class="field"><label for="en_reparacion">En Reparación</label><input type="number" id="en_reparacion" min="0" /></div>
-          <div class="field"><label for="tercerizado">Tercerizado</label><input type="number" id="tercerizado" min="0" /></div>
-          <div class="field"><label for="espera_repuesto">Espera de repuesto</label><input type="number" id="espera_repuesto" min="0" /></div>
-          <div class="field"><label for="necesidades_cant">Necesidades</label><input type="number" id="necesidades_cant" min="0" /></div>
-        </div>
-      </div>
-
-      <!-- Repuestos en espera -->
-      <div class="card-form">
-        <h2>Repuestos en espera</h2>
-        <table class="grid" id="tabla-repuestos">
+        <h2>Movimientos</h2>
+        <table class="grid" id="tabla-movimientos">
           <thead>
-            <tr><th>N°</th><th>Dominio</th><th>Repuesto</th><th>Tiempo de espera</th></tr>
+            <tr>
+              <th style="text-align:left">&nbsp;</th>
+              <th>Total</th>
+              <th>Cantidad ITEM Repuestos Diferentes</th>
+              <th>Cantidad Repuestos Totales</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
 
-      <!-- Necesidades -->
+      <div class="card-form">
+        <h2>Transferencias de Base 4 a:</h2>
+        <table class="grid" id="tabla-transferencias">
+          <thead>
+            <tr>
+              <th style="text-align:left">Destino</th>
+              <th>Total</th>
+              <th>Cantidad ITEM Repuestos Diferentes</th>
+              <th>Cantidad Repuestos Totales</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card-form">
+        <h2>Resumen</h2>
+        <div class="grid2">
+          <div class="field"><label for="repuesto_en_espera">Repuestos en espera (cantidad)</label><input type="number" id="repuesto_en_espera" min="0" /></div>
+          <div class="field"><label for="necesidades_cant">Necesidades (cantidad)</label><input type="number" id="necesidades_cant" min="0" /></div>
+        </div>
+      </div>
+
+      <div class="card-form">
+        <h2>Repuestos en espera</h2>
+        <table class="grid" id="tabla-repuestos">
+          <thead>
+            <tr><th>N°</th><th>Dominio</th><th>Repuesto / Observación</th><th>Tiempo de pedido y fecha estimada</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <div class="card-form">
         <h2>Necesidades</h2>
         <table class="grid" id="tabla-necesidades">
@@ -113,6 +122,6 @@
   <script src="js/listados.js"></script>
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
-  <script src="js/supervisores.js"></script>
+  <script src="js/almacen.js"></script>
 </body>
 </html>

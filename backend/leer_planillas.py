@@ -27,7 +27,7 @@ CSV_URL = ""  # pegá acá la URL CSV publicada de la pestaña Supervisores
 # ---- Modo B: gspread ----
 CRED_JSON = "credenciales.json"
 SHEET_ID = ""        # id de la Google Sheet (de la URL)
-HOJA = "Supervisores"
+HOJA = "Supervisores"   # pestañas: "Supervisores", "Estacionarios", "Almacen"
 
 
 def leer_csv(url: str) -> pd.DataFrame:

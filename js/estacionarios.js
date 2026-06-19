@@ -1,0 +1,48 @@
+/* ============================================================
+   Lógica de la planilla de Equipos Estacionarios  (sector: Panol)
+   ============================================================ */
+(function () {
+  "use strict";
+
+  const SECTOR = "Panol";
+  const COLS_EQ = ["total", "disponible", "reparacion", "demora", "observaciones"];
+
+  // ---------- Desplegables ----------
+  poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+  poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
+  enlazarSemana("semana", "desde", "hasta");
+
+  // ---------- Grilla de equipos (etiqueta = nombre del equipo) ----------
+  const filasEquipos = LISTADOS.equiposEstacionarios.map((eq) => [eq, eq]);
+  construirFilasEtiqueta("tabla-equipos", filasEquipos, COLS_EQ);
+
+  // ---------- Datos / validación ----------
+  function recolectar() {
+    return {
+      sector: SECTOR,
+      planilla: "Estacionarios",
+      clave: $("clave").value,
+      semana: $("semana").value,
+      desde: $("desde").value,
+      hasta: $("hasta").value,
+      ubicacion: $("ubicacion").value,
+      cant_panoleros: $("cant_panoleros").value,
+      // sólo equipos con algún dato cargado
+      equipos: leerTablaEtiquetaArray("tabla-equipos", "equipo", COLS_EQ),
+    };
+  }
+
+  function validar(d) {
+    if (!d.clave) return "Ingresá la clave del sector.";
+    if (!d.semana) return "Elegí la semana.";
+    if (!d.ubicacion) return "Elegí la ubicación.";
+    if (d.equipos.length === 0) return "Cargá al menos un equipo.";
+    return null;
+  }
+
+  // ---------- Conectar ----------
+  conectarForm(recolectar, validar, function () {
+    $("form").reset();
+    $("desde").value = $("hasta").value = "";
+  });
+})();

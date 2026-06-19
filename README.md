@@ -7,8 +7,13 @@ planilla. Los datos caen en una **Google Sheet** y el **backend de Python** los 
 Navegador (form)  →  Google Apps Script (valida clave)  →  Google Sheet  →  Python
 ```
 
-Hoy está armada la planilla de **Supervisores**. Las de Estacionarios y Almacén
-quedan para la siguiente etapa (la estructura ya está lista para sumarlas).
+Están las **3 planillas**, cada una protegida por la clave de su sector:
+
+| Planilla | Sector (clave) | Hoja en la Sheet |
+|----------|----------------|------------------|
+| Supervisores | `Taller` | `Supervisores` |
+| Equipos Estacionarios | `Panol` | `Estacionarios` |
+| Almacén | `Almacen` | `Almacen` |
 
 ---
 
@@ -17,10 +22,15 @@ quedan para la siguiente etapa (la estructura ya está lista para sumarlas).
 ```
 index.html              Página de inicio (elegir planilla)
 supervisores.html       Planilla de Supervisores
+estacionarios.html      Planilla de Equipos Estacionarios
+almacen.html            Planilla de Almacén
 css/styles.css          Estilos
-js/listados.js          ★ Datos maestros (supervisores, obras, semanas…) — editá acá para alta/baja
+js/listados.js          ★ Datos maestros (supervisores, obras, equipos, semanas…) — editá acá para alta/baja
 js/config.js            ★ Pegás acá la URL del Apps Script
-js/supervisores.js      Lógica del formulario
+js/common.js            Utilidades compartidas por las 3 planillas
+js/supervisores.js      Lógica de Supervisores
+js/estacionarios.js     Lógica de Estacionarios
+js/almacen.js           Lógica de Almacén
 apps-script/Codigo.gs   Código para Google Apps Script (el "backend de datos")
 backend/leer_planillas.py  Lector en Python para tu análisis
 ```
