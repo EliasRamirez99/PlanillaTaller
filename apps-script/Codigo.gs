@@ -20,10 +20,10 @@
 // 🔑 CAMBIÁ ESTAS CLAVES por las reales y compartilas con cada sector.
 // "Admin" es la clave para entrar a Ajustes (editar los listados).
 const CLAVES = {
-  "Taller":  "taller-2026",
-  "Almacen": "almacen-2026",
-  "Panol":   "panol-2026",
-  "Admin":   "admin-2026",
+  "Taller":  "123",
+  "Almacen": "123",
+  "Panol":   "123",
+  "Admin":   "123",
 };
 
 // Columnas reutilizadas.
