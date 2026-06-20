@@ -74,9 +74,9 @@
       ["En reparación", f.en_reparacion], ["Tercerizado", f.tercerizado],
       ["Espera de repuesto", f.espera_repuesto], ["Necesidades", f.necesidades_cant],
     ]);
-    const rep = repuestosDesdeFila(f, 5);
+    const rep = repuestosDesdeFila(f, 33);
     if (rep) h += `<h4>Repuestos en espera</h4>${rep}`;
-    const nec = necesidadesDesdeFila(f, 5);
+    const nec = necesidadesDesdeFila(f, 33);
     if (nec) h += `<h4>Necesidades</h4>${nec}`;
     return h;
   }
@@ -110,9 +110,9 @@
     const tt = tabla(["Destino", "Total", "Items dif.", "Repuestos"], tr);
     if (tt) h += `<h4>Transferencias de Base 4 a:</h4>${tt}`;
 
-    const rep = repuestosDesdeFila(f, 10, "Repuesto / Obs.");
+    const rep = repuestosDesdeFila(f, 33, "Repuesto / Obs.");
     if (rep) h += `<h4>Repuestos en espera</h4>${rep}`;
-    const nec = necesidadesDesdeFila(f, 5);
+    const nec = necesidadesDesdeFila(f, 33);
     if (nec) h += `<h4>Necesidades</h4>${nec}`;
     return h;
   }

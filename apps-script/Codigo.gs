@@ -33,6 +33,9 @@ const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
 const TRANSF_KEYS = ["720", "745", "758", "760", "base7"];
 const EQ_COLS = ["total", "disponible", "reparacion", "demora", "observaciones"];
 
+// Tope de filas guardadas para Repuestos en espera y Necesidades (Supervisores y Almacén).
+const MAX_LISTA = 33;
+
 // Cantidad de columnas de cada listado editable desde Ajustes.
 const LISTADO_COLS = {
   supervisores: 3, // nombre, ubicacion, taller
@@ -85,8 +88,8 @@ function encabezadosSupervisores() {
   const h = ["timestamp", "semana", "desde", "hasta", "supervisor", "ubicacion",
     "taller", "obra", "cant_mecanicos", "km", "ordenes", "tareas",
     "en_reparacion", "tercerizado", "espera_repuesto", "necesidades_cant"];
-  for (let i = 1; i <= 5; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
-  for (let i = 1; i <= 5; i++) h.push(`nec${i}`);
+  for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
+  for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
   return h;
 }
 
@@ -97,11 +100,11 @@ function guardarSupervisores(d) {
     d.taller, d.obra, d.cant_mecanicos, d.km, d.ordenes, d.tareas,
     d.en_reparacion, d.tercerizado, d.espera_repuesto, d.necesidades_cant,
   ];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < MAX_LISTA; i++) {
     const r = (d.repuestos && d.repuestos[i]) || {};
     REP.forEach((c) => fila.push(r[c] || ""));
   }
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < MAX_LISTA; i++) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
   }
@@ -126,8 +129,8 @@ function encabezadosAlmacen() {
   MOV_KEYS.forEach((k) => COLS3.forEach((c) => h.push(`${k}_${c}`)));
   TRANSF_KEYS.forEach((k) => COLS3.forEach((c) => h.push(`transf_${k}_${c}`)));
   h.push("repuesto_en_espera", "necesidades_cant");
-  for (let i = 1; i <= 10; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
-  for (let i = 1; i <= 5; i++) h.push(`nec${i}`);
+  for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
+  for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
   return h;
 }
 
@@ -139,11 +142,11 @@ function guardarAlmacen(d) {
   MOV_KEYS.forEach((k) => { const o = mov[k] || {}; COLS3.forEach((c) => fila.push(o[c] || "")); });
   TRANSF_KEYS.forEach((k) => { const o = transf[k] || {}; COLS3.forEach((c) => fila.push(o[c] || "")); });
   fila.push(d.repuesto_en_espera || "", d.necesidades_cant || "");
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < MAX_LISTA; i++) {
     const r = (d.repuestos && d.repuestos[i]) || {};
     REP.forEach((c) => fila.push(r[c] || ""));
   }
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < MAX_LISTA; i++) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
   }
@@ -248,6 +251,11 @@ function hoja(nombre, encabezados) {
     sh = ss.insertSheet(nombre);
     sh.appendRow(encabezados);
     sh.setFrozenRows(1);
+    return sh;
+  }
+  // Si subimos los límites, completamos los encabezados que falten.
+  if (sh.getLastColumn() < encabezados.length) {
+    sh.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
   }
   return sh;
 }

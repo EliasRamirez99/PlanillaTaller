@@ -26,8 +26,8 @@
     });
 
     // ---------- Tablas dinámicas (autocompletan los contadores) ----------
-    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n));
-    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n));
+    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33);
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-repuestos", repCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
