@@ -5,9 +5,6 @@
   "use strict";
 
   const SECTOR = "Almacen";
-  const sesion = obtenerSesion(SECTOR);
-  if (!sesion) return;
-
   const COLS3 = ["total", "items", "repuestos"];
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
@@ -25,7 +22,7 @@
     ["base7", "Base 7"],
   ];
 
-  cargarExtras(function () {
+  prepararListados(function () {
     // ---------- Desplegables ----------
     poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
@@ -53,7 +50,7 @@
     return {
       sector: SECTOR,
       planilla: "Almacen",
-      clave: sesion.clave,
+      clave: claveSector(),
       semana: $("semana").value,
       desde: $("desde").value,
       hasta: $("hasta").value,

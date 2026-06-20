@@ -16,29 +16,29 @@
     <div class="titulo">SELECCIONÁ TU PLANILLA</div>
 
     <div class="cards">
-      <div class="card" data-sector="Taller" data-page="supervisores.html" data-label="Resumen Supervisores">
+      <a class="card" href="supervisores.html">
         <h3>Resumen Supervisores</h3>
         <p>Estado del taller: órdenes, tareas, en reparación, repuestos en espera y necesidades.</p>
-        <span class="tag">Sector: Taller</span>
-      </div>
+        <span class="tag">Taller</span>
+      </a>
 
-      <div class="card" data-sector="Panol" data-page="estacionarios.html" data-label="Equipos Estacionarios">
+      <a class="card" href="estacionarios.html">
         <h3>Equipos Estacionarios</h3>
         <p>Generadores, compresores, chulengos, etc. Total / disponible / en reparación.</p>
-        <span class="tag">Sector: Pañol</span>
-      </div>
+        <span class="tag">Pañol</span>
+      </a>
 
-      <div class="card" data-sector="Almacen" data-page="almacen.html" data-label="Resumen Almacén">
+      <a class="card" href="almacen.html">
         <h3>Resumen Almacén</h3>
         <p>OR cargadas, remitos, transferencias y repuestos en espera.</p>
-        <span class="tag">Sector: Almacén</span>
-      </div>
+        <span class="tag">Almacén</span>
+      </a>
     </div>
 
-    <!-- Pedido de clave de la planilla / sección seleccionada -->
+    <!-- Pedido de clave SOLO para Ajustes -->
     <div id="gate" class="gate" style="display:none">
-      <h3>Planilla: <span id="gate-title"></span></h3>
-      <p>Ingresá la clave de tu sector para continuar.</p>
+      <h3><span id="gate-title"></span></h3>
+      <p>Ingresá la clave de administración para continuar.</p>
       <div class="field">
         <label for="gate-clave">Clave del sector</label>
         <input type="password" id="gate-clave" autocomplete="off" />

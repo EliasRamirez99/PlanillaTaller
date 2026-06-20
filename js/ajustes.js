@@ -22,10 +22,20 @@
 
   const cont = $("ajustes");
 
-  // Trae los extras (los suma a LISTADOS) y arma todo.
-  cargarExtras(function () {
+  // Arma todo al instante (cache local) y refresca extras en segundo plano.
+  prepararListados(function () {
     TIPOS.forEach(render);
   });
+
+  // Guarda un alta en la caché local para que los formularios la vean ya.
+  function agregarAExtrasCache(tipo, fila) {
+    try {
+      const c = JSON.parse(localStorage.getItem("ops_extras") || "{}") || {};
+      if (!Array.isArray(c[tipo])) c[tipo] = [];
+      c[tipo].push(fila);
+      localStorage.setItem("ops_extras", JSON.stringify(c));
+    } catch (e) {}
+  }
 
   function render(cfg) {
     const card = document.createElement("div");
@@ -63,6 +73,7 @@
       // Modo demo: sin Google, agrega sólo en pantalla.
       if (!CONFIG.APPS_SCRIPT_URL) {
         LISTADOS[cfg.tipo].push(fila);
+        agregarAExtrasCache(cfg.tipo, fila);
         pintar();
         card.querySelectorAll("input[data-campo]").forEach((i) => (i.value = ""));
         setStatus("✅ (Demo) Agregado solo localmente.", "ok");
@@ -79,6 +90,7 @@
         .then((out) => {
           if (out && out.ok) {
             LISTADOS[cfg.tipo].push(fila);
+            agregarAExtrasCache(cfg.tipo, fila);
             pintar();
             card.querySelectorAll("input[data-campo]").forEach((i) => (i.value = ""));
             setStatus("✅ Agregado.", "ok");

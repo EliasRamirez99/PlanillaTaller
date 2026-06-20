@@ -4,6 +4,12 @@
 
 const $ = (id) => document.getElementById(id);
 
+// Clave que las planillas mandan al guardar (las planillas ya no la piden al usuario).
+// Fallback "123" por si quedó un config.js viejo cacheado, así el guardar nunca falla.
+function claveSector() {
+  return (typeof CONFIG !== "undefined" && CONFIG.SECTOR_CLAVE) || "123";
+}
+
 // Llena un <select> con opciones.
 function poblarSelect(sel, items, valueFn, textFn) {
   items.forEach((it) => {
@@ -42,10 +48,27 @@ async function validarClave(sector, clave) {
   }
 }
 
-// Trae los datos agregados desde Ajustes y los suma a LISTADOS, luego llama cb().
-// Si no hay URL o falla, sigue con los valores por defecto (no bloquea el form).
-function cargarExtras(cb) {
-  if (typeof LISTADOS === "undefined" || !CONFIG.APPS_SCRIPT_URL) { cb(); return; }
+// Suma a LISTADOS los datos extra (los que se agregaron desde Ajustes).
+function aplicarExtras(extras) {
+  if (!extras || typeof LISTADOS === "undefined") return;
+  Object.keys(extras).forEach((tipo) => {
+    if (Array.isArray(LISTADOS[tipo]) && Array.isArray(extras[tipo])) {
+      extras[tipo].forEach((f) => LISTADOS[tipo].push(f));
+    }
+  });
+}
+
+function extrasCache() {
+  try { return JSON.parse(localStorage.getItem("ops_extras") || "null"); } catch (e) { return null; }
+}
+
+// Arma los listados SIN depender de internet:
+// 1) aplica lo cacheado (instantáneo) y llama cb() para construir el form YA.
+// 2) refresca los extras en segundo plano (no bloquea; si falla, no pasa nada).
+function prepararListados(cb) {
+  aplicarExtras(extrasCache());
+  cb();
+  if (!CONFIG.APPS_SCRIPT_URL) return;
   fetch(CONFIG.APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -54,15 +77,10 @@ function cargarExtras(cb) {
     .then((r) => r.json())
     .then((out) => {
       if (out && out.ok && out.datos) {
-        Object.keys(out.datos).forEach((tipo) => {
-          if (Array.isArray(LISTADOS[tipo]) && Array.isArray(out.datos[tipo])) {
-            out.datos[tipo].forEach((f) => LISTADOS[tipo].push(f));
-          }
-        });
+        try { localStorage.setItem("ops_extras", JSON.stringify(out.datos)); } catch (e) {}
       }
-      cb();
     })
-    .catch(() => cb());
+    .catch(() => {});
 }
 
 // Lee la sesión guardada al pasar la clave en el inicio.

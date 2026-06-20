@@ -5,13 +5,10 @@
   "use strict";
 
   const SECTOR = "Taller";
-  const sesion = obtenerSesion(SECTOR); // redirige al inicio si no pasó la clave
-  if (!sesion) return;
-
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
-  // Trae listados agregados desde Ajustes y recién ahí arma el formulario.
-  cargarExtras(function () {
+  // Arma el formulario al instante (listados locales); refresca extras en 2º plano.
+  prepararListados(function () {
     // ---------- Desplegables ----------
     poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
     poblarSelect($("supervisor"), LISTADOS.supervisores, (s) => s[0], (s) => s[0]);
@@ -43,7 +40,7 @@
     return {
       sector: SECTOR,
       planilla: "Supervisores",
-      clave: sesion.clave,
+      clave: claveSector(),
       semana: $("semana").value,
       desde: $("desde").value,
       hasta: $("hasta").value,

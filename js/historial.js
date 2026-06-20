@@ -168,11 +168,20 @@
   }
 
   function cargar() {
+    // 1) Mostrar al instante lo último cacheado (sin depender de internet).
+    let mostrado = false;
+    try {
+      const cache = JSON.parse(localStorage.getItem("ops_historial") || "null");
+      if (cache && cache.length) { render(cache); mostrado = true; }
+    } catch (e) {}
+
     if (!CONFIG.APPS_SCRIPT_URL) {
-      estado("Configurá la conexión a Google (js/config.js) para ver el historial.", "");
+      if (!mostrado) estado("Configurá la conexión a Google (js/config.js) para ver el historial.", "");
       return;
     }
-    estado("Cargando…", "");
+    if (!mostrado) estado("Cargando…", "");
+
+    // 2) Refrescar desde el servidor en segundo plano.
     fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -180,10 +189,14 @@
     })
       .then((r) => r.json())
       .then((out) => {
-        if (out && out.ok) render(out.datos || []);
-        else estado("No se pudo cargar el historial.", "err");
+        if (out && out.ok) {
+          render(out.datos || []);
+          try { localStorage.setItem("ops_historial", JSON.stringify(out.datos || [])); } catch (e) {}
+        } else if (!mostrado) {
+          estado("No se pudo cargar el historial.", "err");
+        }
       })
-      .catch(() => estado("No se pudo conectar para traer el historial.", "err"));
+      .catch(() => { if (!mostrado) estado("No se pudo conectar para traer el historial.", "err"); });
   }
 
   // ---------- eventos ----------
