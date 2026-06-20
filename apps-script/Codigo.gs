@@ -73,6 +73,9 @@ function doPost(e) {
     if (d.accion === "editar_listado") { editarListado(d); return json({ ok: true }); }
     if (d.accion === "borrar_listado") { borrarListado(d); return json({ ok: true }); }
 
+    // Editar una carga ya existente (desde el historial).
+    if (d.accion === "editar_carga") { editarCarga(d); return json({ ok: true }); }
+
     switch (d.planilla) {
       case "Supervisores":  guardarSupervisores(d); break;
       case "Estacionarios": guardarEstacionarios(d); break;
@@ -95,10 +98,9 @@ function encabezadosSupervisores() {
   return h;
 }
 
-function guardarSupervisores(d) {
-  const sh = hoja("Supervisores", encabezadosSupervisores());
+function filaSupervisores(d, ts) {
   const fila = [
-    new Date(), d.semana, d.desde, d.hasta, d.supervisor, d.ubicacion,
+    ts, d.semana, d.desde, d.hasta, d.supervisor, d.ubicacion,
     d.taller, d.obra, d.cant_mecanicos, d.km, d.ordenes, d.tareas,
     d.en_reparacion, d.tercerizado, d.espera_repuesto, d.necesidades_cant,
   ];
@@ -110,19 +112,27 @@ function guardarSupervisores(d) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
   }
-  sh.appendRow(fila);
+  return fila;
+}
+
+function guardarSupervisores(d) {
+  hoja("Supervisores", encabezadosSupervisores()).appendRow(filaSupervisores(d, new Date()));
 }
 
 /* ---------- Estacionarios (1 fila por equipo cargado) ---------- */
+function encabezadosEstacionarios() {
+  return ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros",
+    "equipo", "total", "disponible", "reparacion", "demora", "observaciones"];
+}
+
+function filasEstacionarios(d, ts) {
+  return (d.equipos || []).map((e) => [ts, d.semana, d.desde, d.hasta, d.ubicacion,
+    d.cant_panoleros, e.equipo, e.total, e.disponible, e.reparacion, e.demora, e.observaciones]);
+}
+
 function guardarEstacionarios(d) {
-  const sh = hoja("Estacionarios",
-    ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros",
-      "equipo", "total", "disponible", "reparacion", "demora", "observaciones"]);
-  const ts = new Date();
-  (d.equipos || []).forEach((e) => {
-    sh.appendRow([ts, d.semana, d.desde, d.hasta, d.ubicacion, d.cant_panoleros,
-      e.equipo, e.total, e.disponible, e.reparacion, e.demora, e.observaciones]);
-  });
+  const sh = hoja("Estacionarios", encabezadosEstacionarios());
+  filasEstacionarios(d, new Date()).forEach((f) => sh.appendRow(f));
 }
 
 /* ---------------- Almacén (1 fila por carga) ---------------- */
@@ -136,11 +146,10 @@ function encabezadosAlmacen() {
   return h;
 }
 
-function guardarAlmacen(d) {
-  const sh = hoja("Almacen", encabezadosAlmacen());
+function filaAlmacen(d, ts) {
   const mov = d.movimientos || {};
   const transf = d.transferencias || {};
-  const fila = [new Date(), d.semana, d.desde, d.hasta, d.ubicacion, d.cant_panoleros];
+  const fila = [ts, d.semana, d.desde, d.hasta, d.ubicacion, d.cant_panoleros];
   MOV_KEYS.forEach((k) => { const o = mov[k] || {}; COLS3.forEach((c) => fila.push(o[c] || "")); });
   TRANSF_KEYS.forEach((k) => { const o = transf[k] || {}; COLS3.forEach((c) => fila.push(o[c] || "")); });
   fila.push(d.repuesto_en_espera || "", d.necesidades_cant || "");
@@ -152,7 +161,49 @@ function guardarAlmacen(d) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
   }
-  sh.appendRow(fila);
+  return fila;
+}
+
+function guardarAlmacen(d) {
+  hoja("Almacen", encabezadosAlmacen()).appendRow(filaAlmacen(d, new Date()));
+}
+
+/* ---------------- Editar una carga existente (por timestamp) ---------------- */
+function editarCarga(d) {
+  const ts = new Date(d.id);
+  if (d.planilla === "Supervisores") {
+    actualizarFila(hoja("Supervisores", encabezadosSupervisores()), ts, filaSupervisores(d, ts));
+  } else if (d.planilla === "Almacen") {
+    actualizarFila(hoja("Almacen", encabezadosAlmacen()), ts, filaAlmacen(d, ts));
+  } else if (d.planilla === "Estacionarios") {
+    const sh = hoja("Estacionarios", encabezadosEstacionarios());
+    borrarFilasTimestamp(sh, ts);
+    filasEstacionarios(d, ts).forEach((f) => sh.appendRow(f));
+  } else {
+    throw new Error("planilla desconocida: " + d.planilla);
+  }
+}
+
+function actualizarFila(sh, tsDate, nuevaFila) {
+  const t = tsDate.getTime();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const c = data[i][0];
+    if (c && new Date(c).getTime() === t) {
+      sh.getRange(i + 1, 1, 1, nuevaFila.length).setValues([nuevaFila]);
+      return;
+    }
+  }
+  throw new Error("carga no encontrada");
+}
+
+function borrarFilasTimestamp(sh, tsDate) {
+  const t = tsDate.getTime();
+  const data = sh.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    const c = data[i][0];
+    if (c && new Date(c).getTime() === t) sh.deleteRow(i + 1);
+  }
 }
 
 /* ---------------- Historial (lectura de cargas) ---------------- */

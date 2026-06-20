@@ -85,6 +85,12 @@ function prepararListados(cb) {
     .catch(() => {});
 }
 
+// Edición de una carga existente (se setea desde el historial y se lee en el form).
+function leerEdicion() {
+  try { return JSON.parse(sessionStorage.getItem("ops_edit") || "null"); } catch (e) { return null; }
+}
+function limpiarEdicion() { sessionStorage.removeItem("ops_edit"); }
+
 // Lee la sesión guardada al pasar la clave en el inicio.
 // Si no coincide con el sector esperado, redirige al inicio (refuerza el acceso).
 function obtenerSesion(sectorEsperado) {
@@ -169,6 +175,21 @@ function tablaDinamica(tbodyId, cols, onCount, max) {
 // Engancha un botón "Agregar" a una tabla dinámica.
 function wireAgregar(btnId, ctrl) {
   $(btnId).addEventListener("click", () => ctrl.agregar());
+}
+
+// Llena una tabla dinámica con filas existentes (modo edición).
+function llenarDinamica(tbodyId, ctrl, items, cols) {
+  const tb = document.querySelector(`#${tbodyId} tbody`);
+  while (tb.querySelectorAll("tr").length < items.length) ctrl.agregar();
+  const trs = tb.querySelectorAll("tr");
+  items.forEach((it, idx) => {
+    cols.forEach((c) => {
+      const inp = trs[idx].querySelector(`input[data-col="${c}"]`);
+      if (inp) inp.value = it[c] || "";
+    });
+  });
+  const first = tb.querySelector("input");
+  if (first) first.dispatchEvent(new Event("input", { bubbles: true })); // recalcula contadores
 }
 
 // Lee tabla (numerada o dinámica) -> array de objetos (sólo filas con dato).

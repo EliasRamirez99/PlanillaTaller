@@ -6,8 +6,9 @@
 
   const SECTOR = "Taller";
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
+  const edicion = leerEdicion();
+  const enEd = !!(edicion && edicion.planilla === "Supervisores");
 
-  // Arma el formulario al instante (listados locales); refresca extras en 2º plano.
   prepararListados(function () {
     // ---------- Desplegables ----------
     poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
@@ -22,22 +23,55 @@
       $("taller").value = s ? s[2] : "";
     });
 
-    // ---------- Tablas dinámicas (autocompletan los contadores) ----------
+    // ---------- Tablas dinámicas ----------
     const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33);
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-repuestos", repCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
+    if (enEd) prefill(edicion.fila, repCtrl, necCtrl);
+
     conectarForm(recolectar, validar, function () {
+      if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
       $("form").reset();
       $("desde").value = $("hasta").value = $("ubicacion").value = $("taller").value = "";
       $("espera_repuesto").value = $("necesidades_cant").value = "0";
     });
   });
 
-  // ---------- Datos / validación ----------
+  function prefill(f, repCtrl, necCtrl) {
+    document.querySelector(".titulo").textContent = "EDITANDO CARGA — SUPERVISORES";
+    document.querySelector("button.primary").textContent = "Guardar cambios";
+
+    $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
+    $("supervisor").value = f.supervisor || ""; $("supervisor").dispatchEvent(new Event("change"));
+    $("ubicacion").value = f.ubicacion || ""; $("taller").value = f.taller || "";
+    $("obra").value = f.obra || "";
+    $("cant_mecanicos").value = f.cant_mecanicos || "";
+    $("km").value = f.km || "";
+    $("ordenes").value = f.ordenes || "";
+    $("tareas").value = f.tareas || "";
+    $("en_reparacion").value = f.en_reparacion || "";
+    $("tercerizado").value = f.tercerizado || "";
+
+    const reps = [];
+    for (let i = 1; i <= 33; i++) {
+      const dom = f["rep" + i + "_dominio"], rep = f["rep" + i + "_repuesto"], tie = f["rep" + i + "_tiempo"];
+      if (("" + (dom || "")).trim() || ("" + (rep || "")).trim() || ("" + (tie || "")).trim())
+        reps.push({ dominio: dom, repuesto: rep, tiempo: tie });
+    }
+    llenarDinamica("tabla-repuestos", repCtrl, reps, COLS_REP);
+
+    const necs = [];
+    for (let i = 1; i <= 33; i++) {
+      const ne = f["nec" + i];
+      if (("" + (ne || "")).trim()) necs.push({ necesidad: ne });
+    }
+    llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad"]);
+  }
+
   function recolectar() {
-    return {
+    const d = {
       sector: SECTOR,
       planilla: "Supervisores",
       clave: claveSector(),
@@ -59,6 +93,8 @@
       repuestos: leerTabla("tabla-repuestos", COLS_REP),
       necesidades: leerTabla("tabla-necesidades", ["necesidad"]),
     };
+    if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }
+    return d;
   }
 
   function validar(d) {

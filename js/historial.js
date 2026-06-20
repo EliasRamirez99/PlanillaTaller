@@ -117,10 +117,12 @@
     return h;
   }
 
+  const PAG = { Supervisores: "supervisores.html", Estacionarios: "estacionarios.html", Almacen: "almacen.html" };
+
   function abrirDetalle(sub) {
     const f = sub.fila;
     let cuerpo =
-      `<h3>${esc(sub.planilla)}</h3>` +
+      `<h3>${esc(sub.planilla)} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button></h3>` +
       campos([
         ["Cargado", fmtFecha(f.timestamp)],
         ["Semana", f.semana],
@@ -132,6 +134,16 @@
 
     $("detalle-body").innerHTML = cuerpo;
     $("detalle").style.display = "flex";
+
+    const be = $("det-editar");
+    if (be && PAG[sub.planilla]) {
+      be.addEventListener("click", () => {
+        sessionStorage.setItem("ops_edit", JSON.stringify({
+          planilla: sub.planilla, id: f.timestamp, fila: f, equipos: sub.equipos || [],
+        }));
+        location.href = PAG[sub.planilla];
+      });
+    }
   }
 
   // ---------- lista ----------

@@ -5,6 +5,10 @@
 (function () {
   "use strict";
 
+  // Al entrar al inicio nunca estamos editando; el botón "Editar" del historial
+  // setea el estado justo antes de ir a la planilla.
+  limpiarEdicion();
+
   // ---- Pestañas ----
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
