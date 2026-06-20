@@ -200,6 +200,12 @@ input.mini {
 .tab:hover { color: var(--verde-osc); }
 .tab.active { color: var(--verde-osc); border-bottom-color: var(--verde-osc); }
 
+/* ---- Estadísticas (placeholder) ---- */
+.en-proceso {
+  background: #fff7e6; border: 1px solid #f0d090; border-radius: 8px;
+  padding: 40px 20px; text-align: center; font-size: 17px; color: #8a6d3b; font-weight: 600;
+}
+
 /* ---- Respuestas ---- */
 .resp-filtro { margin: 8px 0 16px; }
 .resp-filtro label { font-size: 14px; font-weight: 600; display: flex; gap: 8px; align-items: center; }

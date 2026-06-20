@@ -131,9 +131,80 @@
       necesidades: ACTUAL.necesidades.map((x) => ({ necesidad: x.necesidad, respuesta: x.respuesta })),
     })
       .then((out) => {
-        if (out && out.ok) setStatus("✅ Respuestas guardadas.", "ok");
+        if (out && out.ok) { setStatus("✅ Respuestas guardadas.", "ok"); cargarRespHist(); }
         else setStatus("❌ No se pudo guardar.", "err");
       })
       .catch(() => setStatus("❌ No se pudo conectar.", "err"));
   }
+
+  /* ---------- Historial de respuestas cargadas ---------- */
+  const estadoRH = hacerStatus($("resp-historial-status"));
+  let RESPHIST = [];
+
+  function fmtFecha(v) {
+    if (!v) return "";
+    const d = new Date(v);
+    if (isNaN(d)) return esc(v);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function tablaDet(headers, filas) {
+    const th = headers.map((h) => `<th>${esc(h)}</th>`).join("");
+    const trs = filas.filter((f) => f.some((c) => String(c).trim() !== ""))
+      .map((f) => "<tr>" + f.map((c) => `<td>${esc(c)}</td>`).join("") + "</tr>").join("");
+    if (!trs) return "";
+    return `<table class="grid det"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+  }
+
+  function cargarRespHist() {
+    let mostrado = false;
+    try {
+      const c = JSON.parse(localStorage.getItem("ops_resp_historial") || "null");
+      if (c && c.length) { renderRespHist(c); mostrado = true; }
+    } catch (e) {}
+    if (!CONFIG.APPS_SCRIPT_URL) { if (!mostrado) estadoRH("Configurá Google para ver el historial.", ""); return; }
+    if (!mostrado) estadoRH("Cargando…", "");
+    post({ accion: "historial_respuestas" })
+      .then((out) => {
+        if (out && out.ok) {
+          renderRespHist(out.datos || []);
+          try { localStorage.setItem("ops_resp_historial", JSON.stringify(out.datos || [])); } catch (e) {}
+        } else if (!mostrado) estadoRH("No se pudo cargar el historial.", "err");
+      })
+      .catch(() => { if (!mostrado) estadoRH("No se pudo conectar para traer el historial.", "err"); });
+  }
+
+  function renderRespHist(datos) {
+    RESPHIST = datos || [];
+    const cont = $("resp-historial");
+    if (!RESPHIST.length) { cont.innerHTML = ""; estadoRH("Todavía no hay respuestas cargadas.", ""); return; }
+    estadoRH("", "");
+    const filas = RESPHIST.map((x, i) => `<tr data-i="${i}">
+      <td>${esc(x.semana || "")}</td>
+      <td>${esc(fmtFecha(x.timestamp))}</td>
+      <td>${(x.repuestos || []).length}</td>
+      <td>${(x.necesidades || []).length}</td>
+      <td class="ver">Ver ▸</td></tr>`).join("");
+    cont.innerHTML = `<table class="grid hist"><thead>
+      <tr><th>Semana</th><th>Guardado</th><th>Repuestos</th><th>Necesidades</th><th></th></tr>
+      </thead><tbody>${filas}</tbody></table>`;
+    cont.querySelectorAll("tbody tr").forEach((tr) => {
+      tr.addEventListener("click", () => abrirDetalleResp(RESPHIST[+tr.dataset.i]));
+    });
+  }
+
+  function abrirDetalleResp(x) {
+    let h = `<h3>Respuestas — ${esc(x.semana)}</h3>`;
+    const tr = tablaDet(["Dominio", "Repuesto", "Fecha pedido", "Tiempo estimado"],
+      (x.repuestos || []).map((r) => [r.dominio, r.repuesto, r.fecha_pedido, r.tiempo_estimado]));
+    if (tr) h += `<h4>Espera de Repuestos</h4>${tr}`;
+    const tn = tablaDet(["Necesidad", "Respuesta"],
+      (x.necesidades || []).map((n) => [n.necesidad, n.respuesta]));
+    if (tn) h += `<h4>Necesidades</h4>${tn}`;
+    $("detalle-body").innerHTML = h;
+    $("detalle").style.display = "flex";
+  }
+
+  $("btn-recargar-resp").addEventListener("click", cargarRespHist);
+  cargarRespHist();
 })();

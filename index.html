@@ -17,6 +17,7 @@
     <div class="tabs">
       <button type="button" class="tab active" data-tab="planillas">Planillas</button>
       <button type="button" class="tab" data-tab="respuestas">Respuestas</button>
+      <button type="button" class="tab" data-tab="estadisticas">Estadísticas</button>
     </div>
 
     <!-- ===================== PESTAÑA PLANILLAS ===================== -->
@@ -61,6 +62,16 @@
       <div class="toolbar">
         <button type="button" class="ghost" id="btn-ajustes">⚙ Ajustes (listados)</button>
       </div>
+
+      <!-- Historial de planillas cargadas -->
+      <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
+      <div class="hist-filtros">
+        <label>Semana <select id="filtro-semana"><option value="">Todas</option></select></label>
+        <label>Familia <select id="filtro-familia"><option value="">Todas</option></select></label>
+        <button type="button" class="ghost small" id="btn-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="historial-status">Cargando…</div>
+      <div id="historial"></div>
     </div>
 
     <!-- ===================== PESTAÑA RESPUESTAS ===================== -->
@@ -73,15 +84,19 @@
       </div>
       <div id="resp-planilla"></div>
 
-      <!-- Historial de cargas -->
-      <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
+      <!-- Historial de respuestas cargadas -->
+      <div class="titulo" style="margin-top:24px">HISTORIAL DE RESPUESTAS CARGADAS</div>
       <div class="hist-filtros">
-        <label>Semana <select id="filtro-semana"><option value="">Todas</option></select></label>
-        <label>Familia <select id="filtro-familia"><option value="">Todas</option></select></label>
-        <button type="button" class="ghost small" id="btn-recargar">↻ Actualizar</button>
+        <button type="button" class="ghost small" id="btn-recargar-resp">↻ Actualizar</button>
       </div>
-      <div class="status" id="historial-status">Cargando…</div>
-      <div id="historial"></div>
+      <div class="status" id="resp-historial-status">Cargando…</div>
+      <div id="resp-historial"></div>
+    </div>
+
+    <!-- ===================== PESTAÑA ESTADÍSTICAS ===================== -->
+    <div class="tab-panel" id="panel-estadisticas" style="display:none">
+      <div class="titulo">ESTADÍSTICAS</div>
+      <div class="en-proceso">🚧 En proceso de realización.</div>
     </div>
 
     <!-- Modal de detalle (compartido) -->

@@ -54,6 +54,7 @@ function doPost(e) {
     if (d.accion === "listados") return json({ ok: true, seeded: estaSeedeado(), datos: leerListados() });
     if (d.accion === "leer_respuestas") return json({ ok: true, datos: leerRespuestas(d.semana) });
     if (d.accion === "guardar_respuestas") { guardarRespuestas(d); return json({ ok: true }); }
+    if (d.accion === "historial_respuestas") return json({ ok: true, datos: historialRespuestas() });
 
     // --- acciones que requieren clave (sector, o Admin para Ajustes) ---
     const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados"];
@@ -342,6 +343,27 @@ function guardarRespuestas(d) {
   sh.clearContents();
   sh.getRange(1, 1, keep.length, header.length).setValues(keep);
   sh.setFrozenRows(1);
+}
+
+// Lista de respuestas cargadas, agrupadas por semana (para el historial).
+function historialRespuestas() {
+  const sh = hojaRespuestas();
+  if (sh.getLastRow() < 2) return [];
+  const data = sh.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < data.length; i++) {
+    const sem = data[i][0];
+    if (!map[sem]) map[sem] = { semana: sem, timestamp: data[i][8], repuestos: [], necesidades: [] };
+    if (new Date(data[i][8]) > new Date(map[sem].timestamp)) map[sem].timestamp = data[i][8];
+    if (data[i][1] === "repuesto") {
+      map[sem].repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
+    } else if (data[i][1] === "necesidad") {
+      map[sem].necesidades.push({ necesidad: data[i][6], respuesta: data[i][7] });
+    }
+  }
+  const arr = Object.keys(map).map((k) => map[k]);
+  arr.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return arr;
 }
 
 // Devuelve la pestaña; la crea con encabezados si no existe.
