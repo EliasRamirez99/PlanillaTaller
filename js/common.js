@@ -48,36 +48,38 @@ async function validarClave(sector, clave) {
   }
 }
 
-// Suma a LISTADOS los datos extra (los que se agregaron desde Ajustes).
-function aplicarExtras(extras) {
-  if (!extras || typeof LISTADOS === "undefined") return;
-  Object.keys(extras).forEach((tipo) => {
-    if (Array.isArray(LISTADOS[tipo]) && Array.isArray(extras[tipo])) {
-      extras[tipo].forEach((f) => LISTADOS[tipo].push(f));
+// Reemplaza en LISTADOS los tipos editables con la estructura {tipo:[{id,fila}]}.
+function aplicarListados(estructura) {
+  if (!estructura || typeof LISTADOS === "undefined") return;
+  Object.keys(estructura).forEach((tipo) => {
+    if (Array.isArray(LISTADOS[tipo]) && Array.isArray(estructura[tipo])) {
+      LISTADOS[tipo] = estructura[tipo].map((e) => (e && e.fila ? e.fila : e));
     }
   });
 }
 
-function extrasCache() {
-  try { return JSON.parse(localStorage.getItem("ops_extras") || "null"); } catch (e) { return null; }
+function listadosCache() {
+  try { return JSON.parse(localStorage.getItem("ops_listados") || "null"); } catch (e) { return null; }
 }
 
 // Arma los listados SIN depender de internet:
-// 1) aplica lo cacheado (instantáneo) y llama cb() para construir el form YA.
-// 2) refresca los extras en segundo plano (no bloquea; si falla, no pasa nada).
+// 1) si ya hay datos sembrados en caché, los aplica y llama cb() para construir YA.
+//    Si no, usa los valores base de js/listados.js.
+// 2) refresca desde el servidor en segundo plano (no bloquea; si falla, no pasa nada).
 function prepararListados(cb) {
-  aplicarExtras(extrasCache());
+  const cache = listadosCache();
+  if (cache && cache.seeded && cache.datos) aplicarListados(cache.datos);
   cb();
   if (!CONFIG.APPS_SCRIPT_URL) return;
   fetch(CONFIG.APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ accion: "listados_extra" }),
+    body: JSON.stringify({ accion: "listados" }),
   })
     .then((r) => r.json())
     .then((out) => {
-      if (out && out.ok && out.datos) {
-        try { localStorage.setItem("ops_extras", JSON.stringify(out.datos)); } catch (e) {}
+      if (out && out.ok && out.seeded && out.datos) {
+        try { localStorage.setItem("ops_listados", JSON.stringify({ seeded: true, datos: out.datos })); } catch (e) {}
       }
     })
     .catch(() => {});

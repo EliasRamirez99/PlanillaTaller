@@ -192,6 +192,14 @@ input.mini {
 /* ---- Toolbar (inicio) ---- */
 .toolbar { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 
+/* ---- Filtros del historial ---- */
+.hist-filtros { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+.hist-filtros label { font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.hist-filtros select {
+  padding: 6px 10px; border: 1px solid var(--azul-borde); border-radius: 6px;
+  background: var(--azul-input); font-size: 14px;
+}
+
 /* ---- Historial ---- */
 table.grid.hist tbody tr { cursor: pointer; }
 table.grid.hist tbody tr:hover { background: #eef6ff; }
@@ -234,3 +242,16 @@ table.grid.det td { background: #fff; }
   background: var(--azul-input); font-size: 14px; min-width: 140px;
 }
 button.primary.small { padding: 8px 16px; font-size: 14px; }
+
+/* ---- Ajustes: acciones por fila (editar / borrar) ---- */
+table.grid th.acc-h { width: 96px; }
+table.grid td.acc { white-space: nowrap; text-align: center; background: #fafafa; }
+table.grid td.acc button {
+  border: none; background: transparent; cursor: pointer; font-size: 15px; padding: 2px 7px; line-height: 1;
+}
+table.grid td.acc button[data-del]:hover,
+table.grid td.acc button[data-cancel]:hover { color: var(--rojo); }
+table.grid td.acc button[data-save]:hover { color: var(--ok); }
+table.grid td input[data-edit] {
+  width: 100%; border: 1px solid var(--azul-borde); background: #fff; padding: 5px 6px; border-radius: 4px;
+}

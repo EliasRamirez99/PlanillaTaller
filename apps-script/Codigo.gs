@@ -51,25 +51,24 @@ function doPost(e) {
 
     // --- lecturas abiertas (no requieren clave) ---
     if (d.accion === "historial") return json({ ok: true, datos: leerHistorial() });
-    if (d.accion === "listados_extra") return json({ ok: true, datos: leerListadosExtra() });
+    if (d.accion === "listados") return json({ ok: true, seeded: estaSeedeado(), datos: leerListados() });
 
-    // --- validar clave (sector, o Admin para Ajustes) ---
-    const sectorClave = (d.accion === "agregar_listado") ? "Admin" : d.sector;
+    // --- acciones que requieren clave (sector, o Admin para Ajustes) ---
+    const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados"];
+    const sectorClave = (accionesAdmin.indexOf(d.accion) >= 0) ? "Admin" : d.sector;
     const claveOk = CLAVES[sectorClave];
     if (!claveOk || d.clave !== claveOk) {
       return json({ ok: false, error: "clave" });
     }
 
     // El inicio sólo pregunta si la clave es correcta (no guarda nada).
-    if (d.accion === "validar") {
-      return json({ ok: true });
-    }
+    if (d.accion === "validar") return json({ ok: true });
 
-    // Agregar un dato a un listado (desde Ajustes, con clave Admin).
-    if (d.accion === "agregar_listado") {
-      agregarListado(d);
-      return json({ ok: true });
-    }
+    // Ajustes: alta / edición / baja / siembra inicial de listados (clave Admin).
+    if (d.accion === "seed_listados") return json({ ok: true, seeded: seedListados(d) });
+    if (d.accion === "agregar_listado") return json({ ok: true, id: agregarListado(d) });
+    if (d.accion === "editar_listado") { editarListado(d); return json({ ok: true }); }
+    if (d.accion === "borrar_listado") { borrarListado(d); return json({ ok: true }); }
 
     switch (d.planilla) {
       case "Supervisores":  guardarSupervisores(d); break;
@@ -207,20 +206,27 @@ function filaObj(head, row) {
   return o;
 }
 
-/* ---------------- Listados (Ajustes) ---------------- */
+/* ---------------- Listados (Ajustes: ver / agregar / editar / borrar) ----------------
+   Pestaña cfg_listados = [id, tipo, v1, v2, v3]. Es la fuente de verdad.
+   Se "siembra" una vez con los valores base que manda el front (js/listados.js).
+   ------------------------------------------------------------------------------------- */
 function hojaListados() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName("cfg_listados");
   if (!sh) {
     sh = ss.insertSheet("cfg_listados");
-    sh.appendRow(["timestamp", "tipo", "v1", "v2", "v3"]);
+    sh.appendRow(["id", "tipo", "v1", "v2", "v3"]);
     sh.setFrozenRows(1);
   }
   return sh;
 }
 
-// Devuelve sólo lo agregado desde Ajustes (los valores base viven en js/listados.js).
-function leerListadosExtra() {
+function estaSeedeado() {
+  return PropertiesService.getScriptProperties().getProperty("listados_seeded") === "1";
+}
+
+// Devuelve todos los listados agrupados, cada entrada con su id (para editar/borrar).
+function leerListados() {
   const sh = hojaListados();
   const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [] };
   if (sh.getLastRow() < 2) return out;
@@ -231,16 +237,56 @@ function leerListadosExtra() {
     const n = LISTADO_COLS[tipo] || 3;
     const fila = [];
     for (let c = 0; c < n; c++) fila.push(data[i][2 + c]);
-    out[tipo].push(fila);
+    out[tipo].push({ id: String(data[i][0]), fila: fila });
   }
   return out;
 }
 
+// Carga inicial de los valores base (una sola vez).
+function seedListados(d) {
+  if (estaSeedeado()) return false;
+  const sh = hojaListados();
+  const datos = d.datos || {};
+  const filas = [];
+  Object.keys(datos).forEach((tipo) => {
+    if (!LISTADO_COLS[tipo]) return;
+    (datos[tipo] || []).forEach((fila) => {
+      filas.push([Utilities.getUuid(), tipo, fila[0] || "", fila[1] || "", fila[2] || ""]);
+    });
+  });
+  if (filas.length) sh.getRange(sh.getLastRow() + 1, 1, filas.length, 5).setValues(filas);
+  PropertiesService.getScriptProperties().setProperty("listados_seeded", "1");
+  return true;
+}
+
 function agregarListado(d) {
   if (!LISTADO_COLS[d.tipo]) throw new Error("tipo de listado invalido: " + d.tipo);
-  const sh = hojaListados();
+  const id = Utilities.getUuid();
   const f = d.fila || [];
-  sh.appendRow([new Date(), d.tipo, f[0] || "", f[1] || "", f[2] || ""]);
+  hojaListados().appendRow([id, d.tipo, f[0] || "", f[1] || "", f[2] || ""]);
+  return id;
+}
+
+function editarListado(d) {
+  const sh = hojaListados();
+  const data = sh.getDataRange().getValues();
+  const f = d.fila || [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(d.id)) {
+      sh.getRange(i + 1, 3, 1, 3).setValues([[f[0] || "", f[1] || "", f[2] || ""]]);
+      return;
+    }
+  }
+  throw new Error("id no encontrado");
+}
+
+function borrarListado(d) {
+  const sh = hojaListados();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(d.id)) { sh.deleteRow(i + 1); return; }
+  }
+  throw new Error("id no encontrado");
 }
 
 // Devuelve la pestaña; la crea con encabezados si no existe.
