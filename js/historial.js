@@ -21,6 +21,19 @@
     const p = (n) => String(n).padStart(2, "0");
     return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
   }
+  // Sólo día (las fechas desde/hasta vuelven como ISO desde Sheets).
+  function fmtDia(v) {
+    if (!v) return "";
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+      const d = new Date(s);
+      if (!isNaN(d)) {
+        const p = (n) => String(n).padStart(2, "0");
+        return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+      }
+    }
+    return s;
+  }
   // Tabla a partir de encabezados y filas (arrays); descarta filas totalmente vacías.
   function tabla(headers, filas) {
     const th = headers.map((h) => `<th>${esc(h)}</th>`).join("");
@@ -111,7 +124,7 @@
       campos([
         ["Cargado", fmtFecha(f.timestamp)],
         ["Semana", f.semana],
-        ["Período", (f.desde || "") + (f.hasta ? " al " + f.hasta : "")],
+        ["Período", fmtDia(f.desde) + (f.hasta ? " al " + fmtDia(f.hasta) : "")],
       ]);
     if (sub.planilla === "Supervisores") cuerpo += detalleSupervisores(f);
     else if (sub.planilla === "Estacionarios") cuerpo += detalleEstacionarios(sub);

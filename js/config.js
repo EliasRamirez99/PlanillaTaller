@@ -14,5 +14,5 @@
 
 const CONFIG = {
   // URL del Web App de Google Apps Script (termina en /exec)
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbySqFMc4jejp9ylJgh50ljmrd9XpbjYxy9mrifrk4-O30maGC-mSF8zY39lhN5EU_lt/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwvX6ULadT-xRl7bM7IO3YikytwrDyWvrmLxLTulkAqP7wsL1uQvZ2q43PMDUSY3JGw/exec",
 };
