@@ -30,7 +30,7 @@ const CLAVES = {
 const REP = ["dominio", "repuesto", "tiempo"];            // repuestos en espera
 const COLS3 = ["total", "items", "repuestos"];            // movimientos / transferencias
 const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
-const TRANSF_KEYS = ["720", "745", "758", "760", "base7"];
+const TRANSF_KEYS = ["720", "745", "758", "760", "base7", "base4"];
 const EQ_COLS = ["total", "disponible", "reparacion", "demora", "observaciones"];
 
 // Tope de filas guardadas para Repuestos en espera y Necesidades (Supervisores y Almacén).
@@ -52,6 +52,8 @@ function doPost(e) {
     // --- lecturas abiertas (no requieren clave) ---
     if (d.accion === "historial") return json({ ok: true, datos: leerHistorial() });
     if (d.accion === "listados") return json({ ok: true, seeded: estaSeedeado(), datos: leerListados() });
+    if (d.accion === "leer_respuestas") return json({ ok: true, datos: leerRespuestas(d.semana) });
+    if (d.accion === "guardar_respuestas") { guardarRespuestas(d); return json({ ok: true }); }
 
     // --- acciones que requieren clave (sector, o Admin para Ajustes) ---
     const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados"];
@@ -287,6 +289,59 @@ function borrarListado(d) {
     if (String(data[i][0]) === String(d.id)) { sh.deleteRow(i + 1); return; }
   }
   throw new Error("id no encontrado");
+}
+
+/* ---------------- Respuestas de jefatura (por semana) ----------------
+   Tab "Respuestas" = [semana, tipo, dominio, repuesto, fecha_pedido,
+   tiempo_estimado, necesidad, respuesta, timestamp]. Se reemplaza por semana.
+   --------------------------------------------------------------------- */
+function hojaRespuestas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName("Respuestas");
+  if (!sh) {
+    sh = ss.insertSheet("Respuestas");
+    sh.appendRow(["semana", "tipo", "dominio", "repuesto", "fecha_pedido",
+      "tiempo_estimado", "necesidad", "respuesta", "timestamp"]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function leerRespuestas(semana) {
+  const sh = hojaRespuestas();
+  const out = { repuestos: [], necesidades: [] };
+  if (sh.getLastRow() < 2) return out;
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) !== String(semana)) continue;
+    if (data[i][1] === "repuesto") {
+      out.repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
+    } else if (data[i][1] === "necesidad") {
+      out.necesidades.push({ necesidad: data[i][6], respuesta: data[i][7] });
+    }
+  }
+  return out;
+}
+
+function guardarRespuestas(d) {
+  const sh = hojaRespuestas();
+  const data = sh.getDataRange().getValues();
+  const header = data[0];
+  const keep = [header];
+  // Conservar lo de otras semanas; descartar lo de esta (se reescribe).
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) !== String(d.semana)) keep.push(data[i]);
+  }
+  const ts = new Date();
+  (d.repuestos || []).forEach((r) => {
+    keep.push([d.semana, "repuesto", r.dominio || "", r.repuesto || "", r.fecha_pedido || "", r.tiempo_estimado || "", "", "", ts]);
+  });
+  (d.necesidades || []).forEach((n) => {
+    keep.push([d.semana, "necesidad", "", "", "", "", n.necesidad || "", n.respuesta || "", ts]);
+  });
+  sh.clearContents();
+  sh.getRange(1, 1, keep.length, header.length).setValues(keep);
+  sh.setFrozenRows(1);
 }
 
 // Devuelve la pestaña; la crea con encabezados si no existe.

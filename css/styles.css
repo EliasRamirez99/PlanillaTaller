@@ -121,6 +121,8 @@ table.grid th { background: var(--verde); font-weight: 600; }
 table.grid td input { width: 100%; border: none; background: transparent; padding: 6px; font-size: 13px; font-family: inherit; }
 table.grid td.num { width: 42px; text-align: center; background: #f0f0f0; font-weight: 600; }
 table.grid td.label { background: #f0f0f0; font-weight: 600; text-align: left; padding-left: 10px; white-space: nowrap; }
+table.grid tr.total-row td { background: #eaf3e0; font-weight: 700; }
+table.grid td.num-total { text-align: center; }
 
 /* ---- Botones / estado ---- */
 .actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
@@ -187,6 +189,26 @@ button.row-del:hover { color: #7a1d12; }
 input.mini {
   width: 70px; padding: 4px 8px; border: 1px solid var(--azul-borde);
   border-radius: 6px; background: #eef2f6; text-align: center;
+}
+
+/* ---- Pestañas (inicio) ---- */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--gris-borde); margin: 8px 0 16px; }
+.tab {
+  border: none; background: transparent; padding: 10px 22px; font-size: 15px; font-weight: 600;
+  cursor: pointer; color: #777; border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.tab:hover { color: var(--verde-osc); }
+.tab.active { color: var(--verde-osc); border-bottom-color: var(--verde-osc); }
+
+/* ---- Respuestas ---- */
+.resp-filtro { margin: 8px 0 16px; }
+.resp-filtro label { font-size: 14px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.resp-filtro select {
+  padding: 8px 12px; border: 1px solid var(--azul-borde); border-radius: 6px;
+  background: var(--azul-input); font-size: 14px;
+}
+table.grid.resp td input {
+  border: 1px solid var(--azul-borde); background: #fff; padding: 6px; border-radius: 4px;
 }
 
 /* ---- Toolbar (inicio) ---- */

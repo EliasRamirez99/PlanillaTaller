@@ -187,10 +187,11 @@ function leerTabla(tbodyId, cols) {
   return filas;
 }
 
-// Lee tabla con etiqueta fija -> objeto { clave: {col: val} } (todas las filas).
+// Lee tabla con etiqueta fija -> objeto { clave: {col: val} } (ignora la fila Total).
 function leerTablaEtiqueta(tbodyId, cols) {
   const out = {};
   document.querySelectorAll(`#${tbodyId} tbody tr`).forEach((tr) => {
+    if (!tr.dataset.clave) return; // saltea la fila "Total"
     const o = {};
     cols.forEach((c) => {
       const inp = tr.querySelector(`input[data-col="${c}"]`);
@@ -199,6 +200,32 @@ function leerTablaEtiqueta(tbodyId, cols) {
     out[tr.dataset.clave] = o;
   });
   return out;
+}
+
+// Agrega una fila "Total" al final de una tabla de etiqueta y suma cada columna.
+// Devuelve la función para recalcular (útil después de reset).
+function filaTotal(tbodyId, cols, etiqueta) {
+  const tb = document.querySelector(`#${tbodyId} tbody`);
+  const tr = document.createElement("tr");
+  tr.className = "total-row";
+  let html = `<td class="label">${etiqueta || "Total"}</td>`;
+  cols.forEach((c) => { html += `<td data-total="${c}" class="num-total">0</td>`; });
+  tr.innerHTML = html;
+  tb.appendChild(tr);
+
+  function recomputar() {
+    cols.forEach((c) => {
+      let suma = 0;
+      tb.querySelectorAll(`tr:not(.total-row) input[data-col="${c}"]`).forEach((inp) => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) suma += v;
+      });
+      tr.querySelector(`[data-total="${c}"]`).textContent = suma;
+    });
+  }
+  tb.addEventListener("input", recomputar);
+  recomputar();
+  return recomputar;
 }
 
 // Lee tabla con etiqueta fija -> array [{etiqueta, col...}] (sólo filas con dato).

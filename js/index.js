@@ -5,6 +5,16 @@
 (function () {
   "use strict";
 
+  // ---- Pestañas ----
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = "none"));
+      $("panel-" + btn.dataset.tab).style.display = "block";
+    });
+  });
+
   const gate = $("gate");
   const gClave = $("gate-clave");
   const gStatus = $("gate-status");

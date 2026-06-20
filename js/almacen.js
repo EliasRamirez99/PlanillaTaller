@@ -6,7 +6,6 @@
 
   const SECTOR = "Almacen";
   const COLS3 = ["total", "items", "repuestos"];
-  const COLS_REP = ["dominio", "repuesto", "tiempo"];
 
   // [clave, etiqueta]
   const MOV_ROWS = [
@@ -15,6 +14,7 @@
     ["remitos_ingreso", "Remitos de Ingreso"],
   ];
   const TRANSF_ROWS = [
+    ["base4", "Base 4"],
     ["720", "720"],
     ["745", "745"],
     ["758", "758"],
@@ -31,17 +31,17 @@
     // ---------- Tablas fijas ----------
     construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
+    const recalcTransf = filaTotal("tabla-transferencias", COLS3, "Total");
 
-    // ---------- Tablas dinámicas (autocompletan los contadores) ----------
-    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("repuesto_en_espera").value = n), 33);
+    // ---------- Necesidades (con contador automático) ----------
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
-    wireAgregar("add-repuestos", repCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
     conectarForm(recolectar, validar, function () {
       $("form").reset();
       $("desde").value = $("hasta").value = "";
-      $("repuesto_en_espera").value = $("necesidades_cant").value = "0";
+      $("necesidades_cant").value = "0";
+      recalcTransf();
     });
   });
 
@@ -58,9 +58,7 @@
       cant_panoleros: $("cant_panoleros").value,
       movimientos: leerTablaEtiqueta("tabla-movimientos", COLS3),
       transferencias: leerTablaEtiqueta("tabla-transferencias", COLS3),
-      repuesto_en_espera: $("repuesto_en_espera").value,
       necesidades_cant: $("necesidades_cant").value,
-      repuestos: leerTabla("tabla-repuestos", COLS_REP),
       necesidades: leerTabla("tabla-necesidades", ["necesidad"]),
     };
   }

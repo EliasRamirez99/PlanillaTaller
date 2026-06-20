@@ -13,62 +13,78 @@
       <span class="sub">Oilfield Production Services<br>Carga semanal de planillas</span>
     </div>
 
-    <div class="titulo">SELECCIONÁ TU PLANILLA</div>
-
-    <div class="cards">
-      <a class="card" href="supervisores.html">
-        <h3>Resumen Supervisores</h3>
-        <p>Estado del taller: órdenes, tareas, en reparación, repuestos en espera y necesidades.</p>
-        <span class="tag">Taller</span>
-      </a>
-
-      <a class="card" href="estacionarios.html">
-        <h3>Equipos Estacionarios</h3>
-        <p>Generadores, compresores, chulengos, etc. Total / disponible / en reparación.</p>
-        <span class="tag">Pañol</span>
-      </a>
-
-      <a class="card" href="almacen.html">
-        <h3>Resumen Almacén</h3>
-        <p>OR cargadas, remitos, transferencias y repuestos en espera.</p>
-        <span class="tag">Almacén</span>
-      </a>
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="planillas">Planillas</button>
+      <button type="button" class="tab" data-tab="respuestas">Respuestas</button>
     </div>
 
-    <!-- Pedido de clave SOLO para Ajustes -->
-    <div id="gate" class="gate" style="display:none">
-      <h3><span id="gate-title"></span></h3>
-      <p>Ingresá la clave de administración para continuar.</p>
-      <div class="field">
-        <label for="gate-clave">Clave del sector</label>
-        <input type="password" id="gate-clave" autocomplete="off" />
+    <!-- ===================== PESTAÑA PLANILLAS ===================== -->
+    <div class="tab-panel" id="panel-planillas">
+      <div class="titulo">SELECCIONÁ TU PLANILLA</div>
+
+      <div class="cards">
+        <a class="card" href="supervisores.html">
+          <h3>Resumen Supervisores</h3>
+          <p>Estado del taller: órdenes, tareas, en reparación, repuestos en espera y necesidades.</p>
+          <span class="tag">Taller</span>
+        </a>
+
+        <a class="card" href="estacionarios.html">
+          <h3>Equipos Estacionarios</h3>
+          <p>Generadores, compresores, chulengos, etc. Total / disponible / en reparación.</p>
+          <span class="tag">Pañol</span>
+        </a>
+
+        <a class="card" href="almacen.html">
+          <h3>Resumen Almacén</h3>
+          <p>OR cargadas, remitos, transferencias y necesidades.</p>
+          <span class="tag">Almacén</span>
+        </a>
       </div>
-      <div class="actions">
-        <button type="button" class="primary" id="gate-go">Acceder</button>
-        <button type="button" class="ghost" id="gate-cancel">Cancelar</button>
+
+      <!-- Pedido de clave SOLO para Ajustes -->
+      <div id="gate" class="gate" style="display:none">
+        <h3><span id="gate-title"></span></h3>
+        <p>Ingresá la clave de administración para continuar.</p>
+        <div class="field">
+          <label for="gate-clave">Clave de administración</label>
+          <input type="password" id="gate-clave" autocomplete="off" />
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" id="gate-go">Acceder</button>
+          <button type="button" class="ghost" id="gate-cancel">Cancelar</button>
+        </div>
+        <div class="status" id="gate-status"></div>
       </div>
-      <div class="status" id="gate-status"></div>
+
+      <div class="toolbar">
+        <button type="button" class="ghost" id="btn-ajustes">⚙ Ajustes (listados)</button>
+      </div>
     </div>
 
-    <div class="toolbar">
-      <button type="button" class="ghost" id="btn-ajustes">⚙ Ajustes (listados)</button>
-      <button type="button" class="ghost" id="btn-recargar">↻ Actualizar historial</button>
+    <!-- ===================== PESTAÑA RESPUESTAS ===================== -->
+    <div class="tab-panel" id="panel-respuestas" style="display:none">
+      <div class="titulo">RESPUESTAS DE JEFATURA</div>
+      <div class="resp-filtro">
+        <label>Semana
+          <select id="resp-semana"><option value="">— Elegir semana —</option></select>
+        </label>
+      </div>
+      <div id="resp-planilla"></div>
+
+      <!-- Historial de cargas -->
+      <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
+      <div class="hist-filtros">
+        <label>Semana <select id="filtro-semana"><option value="">Todas</option></select></label>
+        <label>Familia <select id="filtro-familia"><option value="">Todas</option></select></label>
+        <button type="button" class="ghost small" id="btn-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="historial-status">Cargando…</div>
+      <div id="historial"></div>
     </div>
 
-    <!-- Historial de cargas -->
-    <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
-    <div class="hist-filtros">
-      <label>Semana
-        <select id="filtro-semana"><option value="">Todas</option></select>
-      </label>
-      <label>Familia
-        <select id="filtro-familia"><option value="">Todas</option></select>
-      </label>
-    </div>
-    <div class="status" id="historial-status">Cargando…</div>
-    <div id="historial"></div>
-
-    <!-- Modal de detalle -->
+    <!-- Modal de detalle (compartido) -->
     <div id="detalle" class="modal" style="display:none">
       <div class="modal-box">
         <button type="button" class="modal-close" id="detalle-close" title="Cerrar">×</button>
@@ -77,9 +93,11 @@
     </div>
   </div>
 
+  <script src="js/listados.js"></script>
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/index.js"></script>
   <script src="js/historial.js"></script>
+  <script src="js/respuestas.js"></script>
 </body>
 </html>

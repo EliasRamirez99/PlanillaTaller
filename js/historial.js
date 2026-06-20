@@ -58,7 +58,7 @@
     for (let i = 1; i <= n; i++) {
       filas.push([f[`rep${i}_dominio`] || "", f[`rep${i}_repuesto`] || "", f[`rep${i}_tiempo`] || ""]);
     }
-    return tabla(["Dominio", etiqueta || "Repuesto", "Tiempo"], filas);
+    return tabla(["Dominio", etiqueta || "Repuesto", "Fecha de pedido"], filas);
   }
   function necesidadesDesdeFila(f, n) {
     const filas = [];
