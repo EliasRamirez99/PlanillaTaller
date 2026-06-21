@@ -20,12 +20,27 @@ function poblarSelect(sel, items, valueFn, textFn) {
   });
 }
 
-// Autocompleta Desde/Hasta a partir de la semana elegida.
+// Formatea una fecha a dd-mm-aaaa. Acepta ISO (de Google Sheets),
+// d/m/aaaa, d-m-aaaa o un Date; si no reconoce, devuelve el valor tal cual.
+function formatearFecha(v) {
+  if (v == null || v === "") return "";
+  const s = String(v);
+  const p = (n) => String(n).padStart(2, "0");
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d)) return `${p(d.getUTCDate())}-${p(d.getUTCMonth() + 1)}-${d.getUTCFullYear()}`;
+  }
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${p(m[1])}-${p(m[2])}-${m[3]}`;
+  return s;
+}
+
+// Autocompleta Desde/Hasta a partir de la semana elegida (en formato dd-mm-aaaa).
 function enlazarSemana(selId, desdeId, hastaId) {
   $(selId).addEventListener("change", function () {
     const s = LISTADOS.semanas.find((x) => x[0] === this.value);
-    $(desdeId).value = s ? s[1] : "";
-    $(hastaId).value = s ? s[2] : "";
+    $(desdeId).value = s ? formatearFecha(s[1]) : "";
+    $(hastaId).value = s ? formatearFecha(s[2]) : "";
   });
 }
 

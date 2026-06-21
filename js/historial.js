@@ -126,7 +126,7 @@
       campos([
         ["Cargado", fmtFecha(f.timestamp)],
         ["Semana", f.semana],
-        ["Período", fmtDia(f.desde) + (f.hasta ? " al " + fmtDia(f.hasta) : "")],
+        ["Período", formatearFecha(f.desde) + (f.hasta ? " al " + formatearFecha(f.hasta) : "")],
       ]);
     if (sub.planilla === "Supervisores") cuerpo += detalleSupervisores(f);
     else if (sub.planilla === "Estacionarios") cuerpo += detalleEstacionarios(sub);
