@@ -95,8 +95,20 @@
 
     <!-- ===================== PESTAÑA ESTADÍSTICAS ===================== -->
     <div class="tab-panel" id="panel-estadisticas" style="display:none">
-      <div class="titulo">ESTADÍSTICAS</div>
-      <div class="en-proceso">🚧 En proceso de realización.</div>
+      <div class="titulo">ESTADÍSTICAS — COMPARATIVO SEMANAL</div>
+      <div class="est-controls">
+        <div class="seg">
+          <button type="button" class="seg-btn active" data-amb="Almacen">Almacén</button>
+          <button type="button" class="seg-btn" data-amb="Supervisores">Supervisores</button>
+        </div>
+        <label id="est-f-taller" style="display:none">Taller <select id="est-taller"></select></label>
+        <label id="est-f-sup" style="display:none">Supervisor <select id="est-sup"></select></label>
+        <button type="button" class="ghost small" id="est-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="est-status"></div>
+      <div id="est-kpis"></div>
+      <div id="est-charts"></div>
+      <div id="est-tabla"></div>
     </div>
 
     <!-- Modal de detalle (compartido) -->
@@ -114,5 +126,6 @@
   <script src="js/index.js"></script>
   <script src="js/historial.js"></script>
   <script src="js/respuestas.js"></script>
+  <script src="js/estadisticas.js"></script>
 </body>
 </html>
