@@ -14,7 +14,7 @@
 
 const CONFIG = {
   // URL del Web App de Google Apps Script (termina en /exec)
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwLwuLE5itUeYvjm29VbB9BcUPnIMwfJKmiq4dg5V9EONsgr0UEvmCd7hB_HWYxom_j/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw8EQNc_WC7V6wErrQxJquWmrf-CX63-Z6NWj011VqHa0Xp89p4J7BqUik2Z0iaxVZL/exec",
 
   // Las planillas de sector ya NO piden clave (carga sin fricción / sin internet).
   // El formulario manda esta clave automáticamente al guardar; debe coincidir con
