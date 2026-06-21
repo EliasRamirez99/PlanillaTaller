@@ -52,6 +52,12 @@
     return `<div class="kvs">${items}</div>`;
   }
 
+  const NOMBRE = {
+    Supervisores: "Supervisores de Taller", Campo: "Supervisores de Campo",
+    Estacionarios: "Equipos Estacionarios", Almacen: "Almacén",
+  };
+  function nombrePlanilla(p) { return NOMBRE[p] || p; }
+
   // ---------- detalle por planilla ----------
   function repuestosDesdeFila(f, n, etiqueta) {
     const filas = [];
@@ -117,12 +123,28 @@
     return h;
   }
 
-  const PAG = { Supervisores: "supervisores.html", Estacionarios: "estacionarios.html", Almacen: "almacen.html" };
+  const PAG = { Supervisores: "supervisores.html", Estacionarios: "estacionarios.html", Almacen: "almacen.html", Campo: "campo.html" };
+
+  function detalleCampo(sub) {
+    const f = sub.fila;
+    let h = campos([["Supervisor", f.supervisor], ["Referente", f.referente], ["Zona", f.zona]]);
+    const to = tabla(["Obra", "Órdenes", "Tareas"], (sub.obras || []).map((o) => [o.obra, o.ordenes, o.tareas]));
+    if (to) h += `<h4>Obras</h4>${to}`;
+    const tv = tabla(["Dominio", "Asignación", "Km", "Litros"], (sub.vehiculos || []).map((v) => [v.dominio, v.asignacion, v.km, v.litros]));
+    if (tv) h += `<h4>Vehículos utilizados</h4>${tv}`;
+    const ti = tabla(["Insumo", "Cantidad"], (sub.insumos || []).map((x) => [x.insumo, x.cantidad]));
+    if (ti) h += `<h4>Insumos utilizados</h4>${ti}`;
+    const tr = tabla(["Obra", "Repuesto", "Fecha de pedido"], (sub.repuestos || []).map((r) => [r.obra, r.repuesto, r.fecha]));
+    if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
+    const tp = tabla(["Obra", "Pendiente"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente]));
+    if (tp) h += `<h4>Pedidos / pendientes</h4>${tp}`;
+    return h;
+  }
 
   function abrirDetalle(sub) {
     const f = sub.fila;
     let cuerpo =
-      `<h3>${esc(sub.planilla)} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button></h3>` +
+      `<h3>${esc(nombrePlanilla(sub.planilla))} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button></h3>` +
       campos([
         ["Cargado", fmtFecha(f.timestamp)],
         ["Semana", f.semana],
@@ -131,6 +153,7 @@
     if (sub.planilla === "Supervisores") cuerpo += detalleSupervisores(f);
     else if (sub.planilla === "Estacionarios") cuerpo += detalleEstacionarios(sub);
     else if (sub.planilla === "Almacen") cuerpo += detalleAlmacen(f);
+    else if (sub.planilla === "Campo") cuerpo += detalleCampo(sub);
 
     $("detalle-body").innerHTML = cuerpo;
     $("detalle").style.display = "flex";
@@ -138,9 +161,8 @@
     const be = $("det-editar");
     if (be && PAG[sub.planilla]) {
       be.addEventListener("click", () => {
-        sessionStorage.setItem("ops_edit", JSON.stringify({
-          planilla: sub.planilla, id: f.timestamp, fila: f, equipos: sub.equipos || [],
-        }));
+        const payload = Object.assign({}, sub, { id: f.timestamp });
+        sessionStorage.setItem("ops_edit", JSON.stringify(payload));
         location.href = PAG[sub.planilla];
       });
     }
@@ -150,6 +172,7 @@
   function quien(sub) {
     const f = sub.fila;
     if (sub.planilla === "Supervisores") return [f.supervisor, f.taller].filter(Boolean).join(" · ");
+    if (sub.planilla === "Campo") return [f.supervisor, f.zona].filter(Boolean).join(" · ");
     if (sub.planilla === "Estacionarios") return `${f.ubicacion || ""} (${(sub.equipos || []).length} equipos)`;
     return f.ubicacion || "";
   }
@@ -185,7 +208,7 @@
       const f = sub.fila;
       return `<tr data-i="${i}">
         <td>${esc(fmtFecha(f.timestamp))}</td>
-        <td><span class="badge b-${esc(sub.planilla)}">${esc(sub.planilla)}</span></td>
+        <td><span class="badge b-${esc(sub.planilla)}">${esc(nombrePlanilla(sub.planilla))}</span></td>
         <td>${esc(f.semana || "")}</td>
         <td>${esc(quien(sub))}</td>
         <td class="ver">Ver ▸</td>

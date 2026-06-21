@@ -137,7 +137,8 @@ function construirFilasEtiqueta(tbodyId, rows, cols) {
 // Tabla DINÁMICA: arranca con 1 fila, se agregan/quitan con botones.
 // onCount(n) se llama con la cantidad de filas con datos (para autocompletar).
 // max = tope de filas (lo que se guarda en la Sheet). Devuelve { agregar }.
-function tablaDinamica(tbodyId, cols, onCount, max) {
+// listas (opcional) = { columna: idDeDatalist } para sugerencias en un input.
+function tablaDinamica(tbodyId, cols, onCount, max, listas) {
   const tb = document.querySelector(`#${tbodyId} tbody`);
 
   function renumerar() {
@@ -163,7 +164,10 @@ function tablaDinamica(tbodyId, cols, onCount, max) {
     if (max && tb.querySelectorAll("tr").length >= max) return null; // tope
     const tr = document.createElement("tr");
     let html = `<td class="num"></td>`;
-    cols.forEach((c) => { html += `<td><input type="text" data-col="${c}" /></td>`; });
+    cols.forEach((c) => {
+      const lst = listas && listas[c] ? ` list="${listas[c]}"` : "";
+      html += `<td><input type="text" data-col="${c}"${lst} /></td>`;
+    });
     html += `<td class="del"><button type="button" class="row-del" title="Quitar fila">×</button></td>`;
     tr.innerHTML = html;
     tb.appendChild(tr);

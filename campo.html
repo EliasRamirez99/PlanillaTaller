@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resumen Semanal — Supervisores de Campo</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">OPS</span>
+      <span class="sub">Oilfield Production Services</span>
+    </div>
+
+    <a class="back" href="index.html">&larr; Volver</a>
+    <div class="titulo">PLANILLA DE RESUMEN SEMANAL — SUPERVISORES DE CAMPO</div>
+
+    <form id="form">
+      <div class="card-form">
+        <h2>Datos generales</h2>
+        <div class="grid3">
+          <div class="field">
+            <label for="semana">Semana *</label>
+            <select id="semana"><option value="">— Elegir —</option></select>
+          </div>
+          <div class="field">
+            <label for="desde">Desde</label>
+            <input type="text" id="desde" readonly />
+          </div>
+          <div class="field">
+            <label for="hasta">Hasta</label>
+            <input type="text" id="hasta" readonly />
+          </div>
+        </div>
+        <div class="grid3" style="margin-top:10px">
+          <div class="field">
+            <label for="supervisor">Supervisor *</label>
+            <select id="supervisor"><option value="">— Elegir —</option></select>
+          </div>
+          <div class="field">
+            <label for="referente">Referente</label>
+            <input type="text" id="referente" />
+          </div>
+          <div class="field">
+            <label for="zona">Zona</label>
+            <input type="text" id="zona" readonly />
+          </div>
+        </div>
+      </div>
+
+      <div class="card-form">
+        <h2>Obras</h2>
+        <table class="grid" id="tabla-obras">
+          <thead>
+            <tr><th>N°</th><th>Obra</th><th>N° Órdenes Realizadas</th><th>N° Tareas / Trabajos</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="ghost small" id="add-obras">＋ Agregar obra</button>
+      </div>
+
+      <div class="card-form">
+        <h2>Vehículos utilizados</h2>
+        <table class="grid" id="tabla-vehiculos">
+          <thead>
+            <tr><th>N°</th><th>Dominio</th><th>Asignación</th><th>Km</th><th>Litros</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="ghost small" id="add-vehiculos">＋ Agregar vehículo</button>
+      </div>
+
+      <div class="card-form">
+        <h2>Insumos utilizados</h2>
+        <table class="grid" id="tabla-insumos">
+          <thead>
+            <tr><th>N°</th><th>Insumo</th><th>Cantidad</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="ghost small" id="add-insumos">＋ Agregar insumo</button>
+      </div>
+
+      <div class="card-form">
+        <h2>Espera de repuestos</h2>
+        <table class="grid" id="tabla-repuestos">
+          <thead>
+            <tr><th>N°</th><th>Obra</th><th>Repuesto</th><th>Fecha de pedido</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="ghost small" id="add-repuestos">＋ Agregar repuesto</button>
+      </div>
+
+      <div class="card-form">
+        <h2>Pedidos / solicitudes / pendientes</h2>
+        <table class="grid" id="tabla-pendientes">
+          <thead>
+            <tr><th>N°</th><th>Obra</th><th>Pendiente</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="ghost small" id="add-pendientes">＋ Agregar pendiente</button>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary">Enviar</button>
+      </div>
+      <div class="status" id="status"></div>
+
+      <datalist id="dl-obras"></datalist>
+    </form>
+  </div>
+
+  <script src="js/listados.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/campo.js"></script>
+</body>
+</html>

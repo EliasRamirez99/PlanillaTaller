@@ -40,18 +40,33 @@
       const f = s.fila;
       const origen = s.planilla === "Supervisores"
         ? [f.supervisor, f.taller].filter(Boolean).join(" · ")
-        : "Almacén" + (f.ubicacion ? " · " + f.ubicacion : "");
+        : s.planilla === "Campo"
+          ? "Campo — " + [f.supervisor, f.zona].filter(Boolean).join(" · ")
+          : "Almacén" + (f.ubicacion ? " · " + f.ubicacion : "");
+
+      // Repuestos en espera
       if (s.planilla === "Supervisores") {
         for (let i = 1; i <= MAXF; i++) {
           const dom = f["rep" + i + "_dominio"], rep = f["rep" + i + "_repuesto"], fec = f["rep" + i + "_tiempo"];
           if (val(dom) || val(rep)) repuestos.push({ dominio: dom || "", repuesto: rep || "", fecha_pedido: fec || "", tiempo_estimado: "", origen: origen });
         }
+      } else if (s.planilla === "Campo") {
+        (s.repuestos || []).forEach((r) => {
+          if (val(r.obra) || val(r.repuesto)) repuestos.push({ dominio: r.obra || "", repuesto: r.repuesto || "", fecha_pedido: r.fecha || "", tiempo_estimado: "", origen: origen });
+        });
       }
+
+      // Necesidades / pendientes
       if (s.planilla === "Supervisores" || s.planilla === "Almacen") {
         for (let i = 1; i <= MAXF; i++) {
           const ne = f["nec" + i];
           if (val(ne)) necesidades.push({ necesidad: ne, origen: origen, respuesta: "" });
         }
+      } else if (s.planilla === "Campo") {
+        (s.pendientes || []).forEach((p) => {
+          const txt = [p.obra, p.pendiente].filter(Boolean).join(": ");
+          if (val(txt)) necesidades.push({ necesidad: txt, origen: origen, respuesta: "" });
+        });
       }
     });
 
@@ -66,7 +81,7 @@
     if (!r.length) {
       html += '<p class="status">No hay repuestos en espera cargados para esta semana.</p>';
     } else {
-      html += '<table class="grid resp"><thead><tr><th>Origen (supervisor · taller)</th><th>Dominio</th><th>Repuesto en espera</th><th>Fecha pedido</th><th>Tiempo estimado</th></tr></thead><tbody>';
+      html += '<table class="grid resp"><thead><tr><th>Origen</th><th>Dominio / Obra</th><th>Repuesto en espera</th><th>Fecha pedido</th><th>Tiempo estimado</th></tr></thead><tbody>';
       r.forEach((x, i) => {
         html += `<tr><td>${esc(x.origen)}</td><td>${esc(x.dominio)}</td><td>${esc(x.repuesto)}</td><td>${esc(x.fecha_pedido)}</td>` +
           `<td><input type="text" data-rep="${i}" value="${esc(x.tiempo_estimado)}" /></td></tr>`;

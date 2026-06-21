@@ -34,6 +34,17 @@
       { lab: "Km", f: (s) => num(s.fila.km) },
       { lab: "Mecánicos", f: (s) => num(s.fila.cant_mecanicos) },
     ],
+    Campo: [
+      { lab: "Órdenes", f: (s) => (s.obras || []).reduce((a, o) => a + num(o.ordenes), 0) },
+      { lab: "Tareas", f: (s) => (s.obras || []).reduce((a, o) => a + num(o.tareas), 0) },
+      { lab: "Obras", f: (s) => (s.obras || []).filter((o) => val(o.obra)).length },
+      { lab: "Vehículos", f: (s) => (s.vehiculos || []).filter((v) => val(v.dominio)).length },
+      { lab: "Km", f: (s) => (s.vehiculos || []).reduce((a, v) => a + num(v.km), 0) },
+      { lab: "Litros", f: (s) => (s.vehiculos || []).reduce((a, v) => a + num(v.litros), 0) },
+      { lab: "Insumos", f: (s) => (s.insumos || []).filter((x) => val(x.insumo)).length },
+      { lab: "Repuestos en espera", f: (s) => (s.repuestos || []).filter((r) => val(r.obra) || val(r.repuesto)).length },
+      { lab: "Pendientes", f: (s) => (s.pendientes || []).filter((p) => val(p.obra) || val(p.pendiente)).length },
+    ],
   };
 
   const setStatus = hacerStatus($("est-status"));
@@ -44,6 +55,9 @@
     if (AMBITO === "Supervisores") {
       const t = $("est-taller").value, sup = $("est-sup").value;
       if (t) subs = subs.filter((s) => s.fila.taller === t);
+      if (sup) subs = subs.filter((s) => s.fila.supervisor === sup);
+    } else if (AMBITO === "Campo") {
+      const sup = $("est-sup").value;
       if (sup) subs = subs.filter((s) => s.fila.supervisor === sup);
     }
     return subs;
@@ -130,8 +144,13 @@
       (LISTADOS.talleres || []).map((t) => `<option>${esc(t)}</option>`).join("");
   }
   function pobSup() {
-    const t = $("est-taller").value;
-    const list = (LISTADOS.supervisores || []).filter((s) => !t || s[2] === t).map((s) => s[0]);
+    let list;
+    if (AMBITO === "Campo") {
+      list = (LISTADOS.supervisores || []).filter((s) => s[2] === "Campo").map((s) => s[0]);
+    } else {
+      const t = $("est-taller").value;
+      list = (LISTADOS.supervisores || []).filter((s) => !t || s[2] === t).map((s) => s[0]);
+    }
     $("est-sup").innerHTML = '<option value="">Todos</option>' + list.map((n) => `<option>${esc(n)}</option>`).join("");
   }
 
@@ -152,9 +171,9 @@
     document.querySelectorAll(".seg-btn").forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
     AMBITO = b.dataset.amb;
-    const sup = AMBITO === "Supervisores";
-    $("est-f-taller").style.display = sup ? "" : "none";
-    $("est-f-sup").style.display = sup ? "" : "none";
+    $("est-f-taller").style.display = AMBITO === "Supervisores" ? "" : "none";
+    $("est-f-sup").style.display = (AMBITO === "Supervisores" || AMBITO === "Campo") ? "" : "none";
+    pobSup();
     render();
   }));
   $("est-taller").addEventListener("change", () => { pobSup(); render(); });

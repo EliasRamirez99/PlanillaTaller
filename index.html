@@ -26,9 +26,15 @@
 
       <div class="cards">
         <a class="card" href="supervisores.html">
-          <h3>Resumen Supervisores</h3>
+          <h3>Supervisores de Taller</h3>
           <p>Estado del taller: órdenes, tareas, en reparación, repuestos en espera y necesidades.</p>
           <span class="tag">Taller</span>
+        </a>
+
+        <a class="card" href="campo.html">
+          <h3>Supervisores de Campo</h3>
+          <p>Obras, vehículos, insumos, repuestos en espera y pendientes por zona.</p>
+          <span class="tag">Campo</span>
         </a>
 
         <a class="card" href="estacionarios.html">
@@ -99,7 +105,8 @@
       <div class="est-controls">
         <div class="seg">
           <button type="button" class="seg-btn active" data-amb="Almacen">Almacén</button>
-          <button type="button" class="seg-btn" data-amb="Supervisores">Supervisores</button>
+          <button type="button" class="seg-btn" data-amb="Supervisores">Sup. Taller</button>
+          <button type="button" class="seg-btn" data-amb="Campo">Sup. Campo</button>
         </div>
         <label id="est-f-taller" style="display:none">Taller <select id="est-taller"></select></label>
         <label id="est-f-sup" style="display:none">Supervisor <select id="est-sup"></select></label>

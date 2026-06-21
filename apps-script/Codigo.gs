@@ -23,6 +23,7 @@ const CLAVES = {
   "Taller":  "123",
   "Almacen": "123",
   "Panol":   "123",
+  "Campo":   "123",
   "Admin":   "123",
 };
 
@@ -80,6 +81,7 @@ function doPost(e) {
       case "Supervisores":  guardarSupervisores(d); break;
       case "Estacionarios": guardarEstacionarios(d); break;
       case "Almacen":       guardarAlmacen(d); break;
+      case "Campo":         guardarCampo(d); break;
       default: return json({ ok: false, error: "planilla desconocida: " + d.planilla });
     }
     return json({ ok: true });
@@ -168,6 +170,25 @@ function guardarAlmacen(d) {
   hoja("Almacen", encabezadosAlmacen()).appendRow(filaAlmacen(d, new Date()));
 }
 
+/* ---------- Supervisores de Campo (1 fila por carga; listas como JSON) ---------- */
+function encabezadosCampo() {
+  return ["timestamp", "semana", "desde", "hasta", "supervisor", "referente", "zona",
+    "obras", "vehiculos", "insumos", "repuestos", "pendientes"];
+}
+
+function filaCampo(d, ts) {
+  return [ts, d.semana, d.desde, d.hasta, d.supervisor, d.referente, d.zona,
+    JSON.stringify(d.obras || []), JSON.stringify(d.vehiculos || []),
+    JSON.stringify(d.insumos || []), JSON.stringify(d.repuestos || []),
+    JSON.stringify(d.pendientes || [])];
+}
+
+function guardarCampo(d) {
+  hoja("Campo", encabezadosCampo()).appendRow(filaCampo(d, new Date()));
+}
+
+function jsonParse(s) { try { return JSON.parse(s || "[]") || []; } catch (e) { return []; } }
+
 /* ---------------- Editar una carga existente (por timestamp) ---------------- */
 function editarCarga(d) {
   const ts = new Date(d.id);
@@ -179,6 +200,8 @@ function editarCarga(d) {
     const sh = hoja("Estacionarios", encabezadosEstacionarios());
     borrarFilasTimestamp(sh, ts);
     filasEstacionarios(d, ts).forEach((f) => sh.appendRow(f));
+  } else if (d.planilla === "Campo") {
+    actualizarFila(hoja("Campo", encabezadosCampo()), ts, filaCampo(d, ts));
   } else {
     throw new Error("planilla desconocida: " + d.planilla);
   }
@@ -247,6 +270,23 @@ function leerHistorial() {
       });
     }
     Object.keys(grupos).forEach((k) => out.push(grupos[k]));
+  }
+
+  // Campo: 1 fila = 1 carga; las listas vienen como JSON.
+  const shc = ss.getSheetByName("Campo");
+  if (shc && shc.getLastRow() >= 2) {
+    const data = shc.getDataRange().getValues();
+    const head = data[0];
+    for (let i = 1; i < data.length; i++) {
+      const o = filaObj(head, data[i]);
+      out.push({
+        planilla: "Campo",
+        fila: { timestamp: o.timestamp, semana: o.semana, desde: o.desde, hasta: o.hasta,
+          supervisor: o.supervisor, referente: o.referente, zona: o.zona },
+        obras: jsonParse(o.obras), vehiculos: jsonParse(o.vehiculos), insumos: jsonParse(o.insumos),
+        repuestos: jsonParse(o.repuestos), pendientes: jsonParse(o.pendientes),
+      });
+    }
   }
 
   // Más recientes primero.
