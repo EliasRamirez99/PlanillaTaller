@@ -14,12 +14,7 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   const val = (x) => x != null && String(x).trim() !== "";
-  function post(body) {
-    return fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(body),
-    }).then((r) => r.json());
-  }
+  function post(body) { return postReintento(body, 3); }
   function histCache() {
     try { return JSON.parse(localStorage.getItem("ops_historial") || "[]") || []; } catch (e) { return []; }
   }

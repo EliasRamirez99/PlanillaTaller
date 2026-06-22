@@ -156,13 +156,10 @@
   function recargar() {
     if (!CONFIG.APPS_SCRIPT_URL) { render(); return; }
     setStatus("Actualizando…", "");
-    fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ accion: "historial" }),
-    }).then((r) => r.json()).then((o) => {
+    postReintento({ accion: "historial" }, 2).then((o) => {
       if (o && o.ok) { try { localStorage.setItem("ops_historial", JSON.stringify(o.datos || [])); } catch (e) {} }
       render();
-    }).catch(() => render());
+    });
   }
 
   // ---------- eventos ----------

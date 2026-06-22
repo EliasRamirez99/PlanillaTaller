@@ -254,22 +254,15 @@
     }
     if (!mostrado) estado("Cargando…", "");
 
-    // 2) Refrescar desde el servidor en segundo plano.
-    fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ accion: "historial" }),
-    })
-      .then((r) => r.json())
-      .then((out) => {
-        if (out && out.ok) {
-          render(out.datos || []);
-          try { localStorage.setItem("ops_historial", JSON.stringify(out.datos || [])); } catch (e) {}
-        } else if (!mostrado) {
-          estado("No se pudo cargar el historial.", "err");
-        }
-      })
-      .catch(() => { if (!mostrado) estado("No se pudo conectar para traer el historial.", "err"); });
+    // 2) Refrescar desde el servidor en segundo plano (con reintentos).
+    postReintento({ accion: "historial" }, 2).then((out) => {
+      if (out && out.ok) {
+        render(out.datos || []);
+        try { localStorage.setItem("ops_historial", JSON.stringify(out.datos || [])); } catch (e) {}
+      } else if (!mostrado) {
+        estado("No se pudo cargar el historial. Reintentá con ↻ Actualizar.", "err");
+      }
+    });
   }
 
   // ---------- eventos ----------

@@ -10,6 +10,30 @@ function claveSector() {
   return (typeof CONFIG !== "undefined" && CONFIG.SECTOR_CLAVE) || "123";
 }
 
+// fetch con timeout (para que una conexión colgada no espere para siempre).
+function fetchConTimeout(url, opts, ms) {
+  if (typeof AbortController === "undefined") return fetch(url, opts);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 15000);
+  return fetch(url, Object.assign({}, opts, { signal: ctrl.signal })).finally(() => clearTimeout(t));
+}
+
+// POST al Apps Script con REINTENTOS (clave para internet inestable del trabajo).
+// Devuelve el JSON de respuesta, o null si la red falló en todos los intentos.
+async function postReintento(body, intentos) {
+  intentos = intentos || 3;
+  const opts = { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) };
+  for (let i = 0; i < intentos; i++) {
+    try {
+      const resp = await fetchConTimeout(CONFIG.APPS_SCRIPT_URL, opts, 15000);
+      return await resp.json();
+    } catch (e) {
+      if (i < intentos - 1) await new Promise((r) => setTimeout(r, 900 * (i + 1)));
+    }
+  }
+  return null;
+}
+
 // Llena un <select> con opciones.
 function poblarSelect(sel, items, valueFn, textFn) {
   items.forEach((it) => {
@@ -50,17 +74,9 @@ function enlazarSemana(selId, desdeId, hastaId) {
 // cualquier clave no vacía.
 async function validarClave(sector, clave) {
   if (!CONFIG.APPS_SCRIPT_URL) return !!clave;
-  try {
-    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ accion: "validar", sector: sector, clave: clave }),
-    });
-    const out = await resp.json();
-    return !!out.ok;
-  } catch (e) {
-    return null; // error de conexión
-  }
+  const out = await postReintento({ accion: "validar", sector: sector, clave: clave }, 3);
+  if (out === null) return null; // error de conexión tras reintentos
+  return !!out.ok;
 }
 
 // Reemplaza en LISTADOS los tipos editables con la estructura {tipo:[{id,fila}]}.
@@ -86,18 +102,11 @@ function prepararListados(cb) {
   if (cache && cache.seeded && cache.datos) aplicarListados(cache.datos);
   cb();
   if (!CONFIG.APPS_SCRIPT_URL) return;
-  fetch(CONFIG.APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ accion: "listados" }),
-  })
-    .then((r) => r.json())
-    .then((out) => {
-      if (out && out.ok && out.seeded && out.datos) {
-        try { localStorage.setItem("ops_listados", JSON.stringify({ seeded: true, datos: out.datos })); } catch (e) {}
-      }
-    })
-    .catch(() => {});
+  postReintento({ accion: "listados" }, 2).then((out) => {
+    if (out && out.ok && out.seeded && out.datos) {
+      try { localStorage.setItem("ops_listados", JSON.stringify({ seeded: true, datos: out.datos })); } catch (e) {}
+    }
+  });
 }
 
 // Edición de una carga existente (se setea desde el historial y se lee en el form).
@@ -239,16 +248,10 @@ function semanaAnteriorDe(semana) {
 function traerCargaAnterior(planilla, semanaActual, matchFn) {
   const ant = semanaAnteriorDe(semanaActual);
   if (!ant || !CONFIG.APPS_SCRIPT_URL) return Promise.resolve({ semanaAnt: ant, sub: null });
-  return fetch(CONFIG.APPS_SCRIPT_URL, {
-    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ accion: "historial" }),
-  })
-    .then((r) => r.json())
-    .then((out) => {
-      const subs = (out.datos || []).filter((s) => s.planilla === planilla && s.fila && s.fila.semana === ant && matchFn(s));
-      return { semanaAnt: ant, sub: subs.length ? subs[subs.length - 1] : null };
-    })
-    .catch(() => ({ semanaAnt: ant, sub: null }));
+  return postReintento({ accion: "historial" }, 2).then((out) => {
+    const subs = ((out && out.datos) || []).filter((s) => s.planilla === planilla && s.fila && s.fila.semana === ant && matchFn(s));
+    return { semanaAnt: ant, sub: subs.length ? subs[subs.length - 1] : null };
+  });
 }
 
 // Lee tabla (numerada o dinámica) -> array de objetos (sólo filas con dato).
@@ -343,23 +346,18 @@ async function enviarDatos(d, statusEl, onOk) {
   }
 
   setStatus("Enviando…", "");
-  try {
-    const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita preflight CORS
-      body: JSON.stringify(d),
-    });
-    const out = await resp.json();
-    if (out.ok) {
-      setStatus("✅ Enviado correctamente. ¡Gracias!", "ok");
-      if (onOk) onOk();
-    } else if (out.error === "clave") {
-      setStatus("❌ Clave de sector incorrecta. Volvé a entrar desde el inicio.", "err");
-    } else {
-      setStatus("❌ Error: " + (out.error || "desconocido"), "err");
-    }
-  } catch (e) {
-    setStatus("❌ No se pudo conectar. Revisá tu internet o la URL configurada.", "err");
+  const out = await postReintento(d, 3);
+  if (out === null) {
+    setStatus("⚠️ La red del trabajo cortó la conexión (probé 3 veces). Tus datos siguen cargados — esperá unos segundos y tocá Enviar de nuevo.", "err");
+    return;
+  }
+  if (out.ok) {
+    setStatus("✅ Enviado correctamente. ¡Gracias!", "ok");
+    if (onOk) onOk();
+  } else if (out.error === "clave") {
+    setStatus("❌ Clave de sector incorrecta. Volvé a entrar desde el inicio.", "err");
+  } else {
+    setStatus("❌ Error: " + (out.error || "desconocido"), "err");
   }
 }
 

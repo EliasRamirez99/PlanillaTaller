@@ -34,11 +34,7 @@
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  function post(body) {
-    return fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body),
-    }).then((r) => r.json());
-  }
+  function post(body) { return postReintento(body, 3); }
   function guardarCache() {
     try { localStorage.setItem("ops_listados", JSON.stringify({ seeded: true, datos: ESTADO })); } catch (e) {}
   }
@@ -72,17 +68,17 @@
   function srvAgregar(tipo, fila) {
     if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve("demo-" + Date.now() + "-" + Math.random());
     return post({ accion: "agregar_listado", sector: "Admin", clave: sesion.clave, tipo: tipo, fila: fila })
-      .then((o) => { if (!o.ok) throw new Error(o.error || "error"); return o.id; });
+      .then((o) => { if (!o || !o.ok) throw new Error((o && o.error) || "error"); return o.id; });
   }
   function srvEditar(id, fila) {
     if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve();
     return post({ accion: "editar_listado", sector: "Admin", clave: sesion.clave, id: id, fila: fila })
-      .then((o) => { if (!o.ok) throw new Error(o.error || "error"); });
+      .then((o) => { if (!o || !o.ok) throw new Error((o && o.error) || "error"); });
   }
   function srvBorrar(id) {
     if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve();
     return post({ accion: "borrar_listado", sector: "Admin", clave: sesion.clave, id: id })
-      .then((o) => { if (!o.ok) throw new Error(o.error || "error"); });
+      .then((o) => { if (!o || !o.ok) throw new Error((o && o.error) || "error"); });
   }
 
   // ---- carga inicial ----
