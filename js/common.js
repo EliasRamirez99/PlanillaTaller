@@ -211,6 +211,46 @@ function llenarDinamica(tbodyId, ctrl, items, cols) {
   if (first) first.dispatchEvent(new Event("input", { bubbles: true })); // recalcula contadores
 }
 
+// Muestra una lista simple en un modal (crea el modal si no existe).
+function mostrarLista(titulo, lineas) {
+  let ov = document.getElementById("lista-modal");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "lista-modal";
+    ov.className = "modal";
+    ov.innerHTML = '<div class="modal-box"><button type="button" class="modal-close" title="Cerrar">×</button><div id="lista-body"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.classList.contains("modal-close")) ov.style.display = "none"; });
+  }
+  const e2 = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  document.getElementById("lista-body").innerHTML = `<h3>${e2(titulo)}</h3>` +
+    (lineas.length ? '<ul class="lista-ul">' + lineas.map((l) => `<li>${e2(l)}</li>`).join("") + "</ul>" : "<p>(sin datos)</p>");
+  ov.style.display = "flex";
+}
+
+// Semana anterior (según el orden de LISTADOS.semanas).
+function semanaAnteriorDe(semana) {
+  const orden = (typeof LISTADOS !== "undefined" ? LISTADOS.semanas || [] : []).map((s) => s[0]);
+  const i = orden.indexOf(semana);
+  return i > 0 ? orden[i - 1] : null;
+}
+
+// Trae del historial la carga de la semana anterior que cumpla matchFn (misma persona/ubicación).
+function traerCargaAnterior(planilla, semanaActual, matchFn) {
+  const ant = semanaAnteriorDe(semanaActual);
+  if (!ant || !CONFIG.APPS_SCRIPT_URL) return Promise.resolve({ semanaAnt: ant, sub: null });
+  return fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ accion: "historial" }),
+  })
+    .then((r) => r.json())
+    .then((out) => {
+      const subs = (out.datos || []).filter((s) => s.planilla === planilla && s.fila && s.fila.semana === ant && matchFn(s));
+      return { semanaAnt: ant, sub: subs.length ? subs[subs.length - 1] : null };
+    })
+    .catch(() => ({ semanaAnt: ant, sub: null }));
+}
+
 // Lee tabla (numerada o dinámica) -> array de objetos (sólo filas con dato).
 function leerTabla(tbodyId, cols) {
   const filas = [];

@@ -159,6 +159,17 @@ button.ghost {
 .back { display:inline-block; margin-bottom: 10px; color:#2b6cb0; text-decoration:none; font-size:14px; }
 .back:hover { text-decoration: underline; }
 
+/* ---- Campo con botón al lado (cantidad auto + ver listado) ---- */
+.campo-conbtn { display: flex; gap: 6px; align-items: stretch; }
+.campo-conbtn input { flex: 1; min-width: 0; }
+
+/* ---- Lista en modal (ver listado de mecánicos/pañoleros) ---- */
+.lista-ul { columns: 2; list-style: disc; padding-left: 20px; margin: 8px 0; font-size: 14px; }
+.lista-ul li { margin: 2px 0; break-inside: avoid; }
+
+/* ---- "Ver anteriores" (paginación de historiales) ---- */
+.ver-mas { text-align: center; margin: 12px 0; }
+
 /* ---- Selección de tarjeta + panel de clave (inicio) ---- */
 .card { cursor: pointer; }
 .card.sel { border-color: var(--verde-osc); box-shadow: 0 0 0 2px var(--verde-osc) inset; }

@@ -74,7 +74,7 @@
 
   function detalleSupervisores(f) {
     let h = campos([
-      ["Supervisor", f.supervisor], ["Ubicación", f.ubicacion], ["Taller", f.taller], ["Obra", f.obra],
+      ["Supervisor", f.supervisor], ["Ubicación", f.ubicacion], ["Taller", f.taller],
       ["Mecánicos", f.cant_mecanicos],
       ["Órdenes realizadas", f.ordenes], ["Tareas realizadas", f.tareas],
       ["En reparación", f.en_reparacion], ["Tercerizado", f.tercerizado],
@@ -193,18 +193,24 @@
     rellenar($("filtro-semana"), uniq(DATOS.map((s) => s.fila.semana)));
     rellenar($("filtro-familia"), uniq(DATOS.map((s) => s.planilla)));
   }
+  let LIMITE = 30;
+  let FILTRADOS = [];
+
   function aplicarFiltro() {
     const s = $("filtro-semana").value;
     const fam = $("filtro-familia").value;
+    LIMITE = 30;
     pintarLista(DATOS.filter((sub) =>
       (!s || sub.fila.semana === s) && (!fam || sub.planilla === fam)));
   }
 
   function pintarLista(items) {
+    FILTRADOS = items;
     if (!DATOS.length) { cont.innerHTML = ""; estado("Todavía no hay planillas cargadas.", ""); return; }
     if (!items.length) { cont.innerHTML = ""; estado("No hay cargas para ese filtro.", ""); return; }
     estado("", "");
-    const filas = items.map((sub, i) => {
+    const visibles = items.slice(0, LIMITE);
+    const filas = visibles.map((sub, i) => {
       const f = sub.fila;
       return `<tr data-i="${i}">
         <td>${esc(fmtFecha(f.timestamp))}</td>
@@ -214,12 +220,18 @@
         <td class="ver">Ver ▸</td>
       </tr>`;
     }).join("");
-    cont.innerHTML = `<table class="grid hist"><thead>
+    let html = `<table class="grid hist"><thead>
       <tr><th>Cargado</th><th>Planilla</th><th>Semana</th><th>Detalle</th><th></th></tr>
       </thead><tbody>${filas}</tbody></table>`;
+    if (items.length > LIMITE) {
+      html += `<div class="ver-mas"><button type="button" class="ghost small" id="hist-mas">Ver anteriores (${items.length - LIMITE} más)</button></div>`;
+    }
+    cont.innerHTML = html;
     cont.querySelectorAll("tbody tr").forEach((tr) => {
-      tr.addEventListener("click", () => abrirDetalle(items[+tr.dataset.i]));
+      tr.addEventListener("click", () => abrirDetalle(visibles[+tr.dataset.i]));
     });
+    const mas = $("hist-mas");
+    if (mas) mas.addEventListener("click", () => { LIMITE += 30; pintarLista(FILTRADOS); });
   }
 
   function render(datos) {

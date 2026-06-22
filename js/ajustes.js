@@ -11,6 +11,7 @@
   // Valores estandarizados (se calculan a partir de lo cargado, sobre todo supervisores).
   let UBIS = [];
   let TALLERES = [];
+  let OBRAS = [];
 
   // cols: { etq, opts?(desplegable), fecha?(formato dd-mm-aaaa) }. Supervisores va primero.
   const TIPOS = [
@@ -19,7 +20,7 @@
     { tipo: "mecanicos", titulo: "Listado de Mecánicos", cols: [
       { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Taller", opts: () => TALLERES } ] },
     { tipo: "panoleros", titulo: "Listado de Pañoleros", cols: [
-      { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Pañol" } ] },
+      { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Obra", opts: () => OBRAS }, { etq: "Pañol" } ] },
     { tipo: "obras", titulo: "Listado de Obras", cols: [
       { etq: "Ubicación", opts: () => UBIS }, { etq: "Obra" } ] },
     { tipo: "semanas", titulo: "Listado de Semanas", cols: [
@@ -52,10 +53,12 @@
     const ubi = new Set(), tal = new Set();
     (ESTADO.supervisores || []).forEach((e) => { if (e.fila[1]) ubi.add(e.fila[1]); if (e.fila[2]) tal.add(e.fila[2]); });
     (ESTADO.mecanicos || []).forEach((e) => { if (e.fila[1]) ubi.add(e.fila[1]); if (e.fila[2]) tal.add(e.fila[2]); });
-    (ESTADO.obras || []).forEach((e) => { if (e.fila[0]) ubi.add(e.fila[0]); });
+    const obr = new Set();
+    (ESTADO.obras || []).forEach((e) => { if (e.fila[0]) ubi.add(e.fila[0]); if (e.fila[1]) obr.add(e.fila[1]); });
     (LISTADOS.talleres || []).forEach((t) => tal.add(t));
     UBIS = Array.from(ubi).sort();
     TALLERES = Array.from(tal).sort();
+    OBRAS = Array.from(obr).sort();
   }
 
   function selectHtml(attr, opts, valor) {

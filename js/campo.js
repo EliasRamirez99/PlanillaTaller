@@ -38,6 +38,9 @@
     wireAgregar("add-repuestos", cRep);
     wireAgregar("add-pendientes", cPend);
 
+    $("prev-repuestos").addEventListener("click", () => cargarAnt("tabla-repuestos", cRep, C_REP, (s) => s.repuestos || []));
+    $("prev-pendientes").addEventListener("click", () => cargarAnt("tabla-pendientes", cPend, C_PEND, (s) => s.pendientes || []));
+
     if (enEd) prefill(edicion, { cObras, cVeh, cIns, cRep, cPend });
 
     conectarForm(recolectar, validar, function () {
@@ -60,6 +63,18 @@
     llenarDinamica("tabla-insumos", c.cIns, ed.insumos || [], C_INS);
     llenarDinamica("tabla-repuestos", c.cRep, ed.repuestos || [], C_REP);
     llenarDinamica("tabla-pendientes", c.cPend, ed.pendientes || [], C_PEND);
+  }
+
+  function cargarAnt(tbodyId, ctrl, cols, extractor) {
+    const sup = $("supervisor").value, sem = $("semana").value;
+    if (!sem || !sup) { alert("Elegí primero la semana y el supervisor."); return; }
+    traerCargaAnterior("Campo", sem, (s) => s.fila.supervisor === sup).then((res) => {
+      if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
+      if (!res.sub) { alert("No se encontró carga de " + sup + " en " + res.semanaAnt + "."); return; }
+      const items = extractor(res.sub);
+      if (!items.length) { alert("La semana anterior no tenía datos para cargar."); return; }
+      llenarDinamica(tbodyId, ctrl, items, cols);
+    });
   }
 
   function recolectar() {

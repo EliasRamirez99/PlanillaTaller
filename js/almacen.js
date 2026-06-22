@@ -8,6 +8,7 @@
   const COLS3 = ["total", "items", "repuestos"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Almacen");
+  let PANS = []; // pañoleros de la ubicación elegida (para "Ver listado")
 
   const MOV_ROWS = [
     ["or_cargadas", "OR Cargadas"],
@@ -27,6 +28,9 @@
     poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
     enlazarSemana("semana", "desde", "hasta");
+    $("ubicacion").addEventListener("change", recalcPanoleros);
+    $("ver-panoleros").addEventListener("click", () =>
+      mostrarLista("Pañoleros — " + ($("ubicacion").value || "?"), PANS.map((p) => p[0] + (p[3] ? " (" + p[3] + ")" : ""))));
 
     construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
@@ -34,6 +38,18 @@
 
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-necesidades", necCtrl);
+    $("prev-necesidades").addEventListener("click", () => {
+      const ub = $("ubicacion").value, sem = $("semana").value;
+      if (!sem || !ub) { alert("Elegí primero la semana y la ubicación."); return; }
+      traerCargaAnterior("Almacen", sem, (s) => s.fila.ubicacion === ub).then((res) => {
+        if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
+        if (!res.sub) { alert("No se encontró carga de " + ub + " en " + res.semanaAnt + "."); return; }
+        const necs = [];
+        for (let i = 1; i <= 33; i++) { const ne = res.sub.fila["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne }); }
+        if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
+        llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad"]);
+      });
+    });
 
     if (enEd) prefill(edicion.fila, necCtrl, recalcTransf);
 
@@ -43,8 +59,15 @@
       $("desde").value = $("hasta").value = "";
       $("necesidades_cant").value = "0";
       recalcTransf();
+      PANS = [];
     });
   });
+
+  function recalcPanoleros() {
+    const u = $("ubicacion").value;
+    PANS = (LISTADOS.panoleros || []).filter((p) => p[1] === u);
+    $("cant_panoleros").value = PANS.length;
+  }
 
   function setEtiqueta(tbodyId, clave, valsObj) {
     document.querySelectorAll(`#${tbodyId} tbody tr`).forEach((tr) => {
@@ -59,7 +82,8 @@
     document.querySelector("button.primary").textContent = "Guardar cambios";
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
     $("ubicacion").value = f.ubicacion || "";
-    $("cant_panoleros").value = f.cant_panoleros || "";
+    recalcPanoleros();
+    if (f.cant_panoleros) $("cant_panoleros").value = f.cant_panoleros;
 
     MOV_ROWS.forEach(([clave]) => {
       setEtiqueta("tabla-movimientos", clave, { total: f[clave + "_total"], items: f[clave + "_items"], repuestos: f[clave + "_repuestos"] });

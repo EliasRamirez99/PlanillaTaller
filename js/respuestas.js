@@ -193,23 +193,36 @@
       .catch(() => { if (!mostrado) estadoRH("No se pudo conectar para traer el historial.", "err"); });
   }
 
+  let LIMITE_RH = 30;
+
   function renderRespHist(datos) {
     RESPHIST = datos || [];
+    LIMITE_RH = 30;
+    pintaRH();
+  }
+  function pintaRH() {
     const cont = $("resp-historial");
     if (!RESPHIST.length) { cont.innerHTML = ""; estadoRH("Todavía no hay respuestas cargadas.", ""); return; }
     estadoRH("", "");
-    const filas = RESPHIST.map((x, i) => `<tr data-i="${i}">
+    const vis = RESPHIST.slice(0, LIMITE_RH);
+    const filas = vis.map((x, i) => `<tr data-i="${i}">
       <td>${esc(x.semana || "")}</td>
       <td>${esc(fmtFecha(x.timestamp))}</td>
       <td>${(x.repuestos || []).length}</td>
       <td>${(x.necesidades || []).length}</td>
       <td class="ver">Ver ▸</td></tr>`).join("");
-    cont.innerHTML = `<table class="grid hist"><thead>
+    let html = `<table class="grid hist"><thead>
       <tr><th>Semana</th><th>Guardado</th><th>Repuestos</th><th>Necesidades</th><th></th></tr>
       </thead><tbody>${filas}</tbody></table>`;
+    if (RESPHIST.length > LIMITE_RH) {
+      html += `<div class="ver-mas"><button type="button" class="ghost small" id="resp-mas">Ver anteriores (${RESPHIST.length - LIMITE_RH} más)</button></div>`;
+    }
+    cont.innerHTML = html;
     cont.querySelectorAll("tbody tr").forEach((tr) => {
-      tr.addEventListener("click", () => abrirDetalleResp(RESPHIST[+tr.dataset.i]));
+      tr.addEventListener("click", () => abrirDetalleResp(vis[+tr.dataset.i]));
     });
+    const mas = $("resp-mas");
+    if (mas) mas.addEventListener("click", () => { LIMITE_RH += 30; pintaRH(); });
   }
 
   function abrirDetalleResp(x) {

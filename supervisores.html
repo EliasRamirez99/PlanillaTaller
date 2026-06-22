@@ -48,19 +48,15 @@
             <input type="text" id="taller" readonly />
           </div>
         </div>
-        <div class="grid2" style="margin-top:10px">
-          <div class="field">
-            <label for="obra">Obra</label>
-            <select id="obra"><option value="">— Elegir —</option></select>
-          </div>
-        </div>
       </div>
 
       <!-- Indicadores -->
       <div class="card-form">
         <h2>Indicadores de la semana</h2>
         <div class="grid3">
-          <div class="field"><label for="cant_mecanicos">Cantidad de Mecánicos</label><input type="number" id="cant_mecanicos" min="0" /></div>
+          <div class="field"><label for="cant_mecanicos">Cantidad de Mecánicos <small>(auto)</small></label>
+            <div class="campo-conbtn"><input type="number" id="cant_mecanicos" readonly /><button type="button" class="ghost small" id="ver-mecanicos">Ver listado</button></div>
+          </div>
           <div class="field"><label for="ordenes">N° Órdenes Realizadas</label><input type="number" id="ordenes" min="0" /></div>
           <div class="field"><label for="tareas">N° Tareas Realizadas</label><input type="number" id="tareas" min="0" /></div>
           <div class="field"><label for="en_reparacion">En Reparación</label><input type="number" id="en_reparacion" min="0" /></div>
@@ -78,6 +74,7 @@
           <tbody></tbody>
         </table>
         <button type="button" class="ghost small" id="add-repuestos">＋ Agregar repuesto</button>
+        <button type="button" class="ghost small" id="prev-repuestos">↩ Cargar de la semana anterior</button>
         <p class="auto-hint">Total repuestos en espera: <input type="number" id="espera_repuesto" class="mini" value="0" readonly /></p>
       </div>
 
@@ -91,6 +88,7 @@
           <tbody></tbody>
         </table>
         <button type="button" class="ghost small" id="add-necesidades">＋ Agregar necesidad</button>
+        <button type="button" class="ghost small" id="prev-necesidades">↩ Cargar de la semana anterior</button>
         <p class="auto-hint">Total necesidades: <input type="number" id="necesidades_cant" class="mini" value="0" readonly /></p>
       </div>
 

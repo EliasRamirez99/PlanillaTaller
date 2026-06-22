@@ -39,8 +39,8 @@
             <select id="ubicacion"><option value="">— Elegir —</option></select>
           </div>
           <div class="field">
-            <label for="cant_panoleros">Cantidad de Pañoleros</label>
-            <input type="number" id="cant_panoleros" min="0" />
+            <label for="cant_panoleros">Cantidad de Pañoleros <small>(auto)</small></label>
+            <div class="campo-conbtn"><input type="number" id="cant_panoleros" readonly /><button type="button" class="ghost small" id="ver-panoleros">Ver listado</button></div>
           </div>
         </div>
       </div>
@@ -84,6 +84,7 @@
           <tbody></tbody>
         </table>
         <button type="button" class="ghost small" id="add-necesidades">＋ Agregar necesidad</button>
+        <button type="button" class="ghost small" id="prev-necesidades">↩ Cargar de la semana anterior</button>
         <p class="auto-hint">Total necesidades: <input type="number" id="necesidades_cant" class="mini" value="0" readonly /></p>
       </div>
 

@@ -41,7 +41,7 @@ const MAX_LISTA = 33;
 const LISTADO_COLS = {
   supervisores: 3, // nombre, ubicacion, taller
   mecanicos: 3,    // nombre, ubicacion, taller
-  panoleros: 3,    // nombre, ubicacion, panol
+  panoleros: 4,    // nombre, ubicacion, obra, panol
   obras: 2,        // ubicacion, obra
   semanas: 3,      // semana, desde, hasta
 };
@@ -309,7 +309,7 @@ function hojaListados() {
   let sh = ss.getSheetByName("cfg_listados");
   if (!sh) {
     sh = ss.insertSheet("cfg_listados");
-    sh.appendRow(["id", "tipo", "v1", "v2", "v3"]);
+    sh.appendRow(["id", "tipo", "v1", "v2", "v3", "v4"]);
     sh.setFrozenRows(1);
   }
   return sh;
@@ -345,10 +345,10 @@ function seedListados(d) {
   Object.keys(datos).forEach((tipo) => {
     if (!LISTADO_COLS[tipo]) return;
     (datos[tipo] || []).forEach((fila) => {
-      filas.push([Utilities.getUuid(), tipo, fila[0] || "", fila[1] || "", fila[2] || ""]);
+      filas.push([Utilities.getUuid(), tipo, fila[0] || "", fila[1] || "", fila[2] || "", fila[3] || ""]);
     });
   });
-  if (filas.length) sh.getRange(sh.getLastRow() + 1, 1, filas.length, 5).setValues(filas);
+  if (filas.length) sh.getRange(sh.getLastRow() + 1, 1, filas.length, 6).setValues(filas);
   PropertiesService.getScriptProperties().setProperty("listados_seeded", "1");
   return true;
 }
@@ -357,7 +357,7 @@ function agregarListado(d) {
   if (!LISTADO_COLS[d.tipo]) throw new Error("tipo de listado invalido: " + d.tipo);
   const id = Utilities.getUuid();
   const f = d.fila || [];
-  hojaListados().appendRow([id, d.tipo, f[0] || "", f[1] || "", f[2] || ""]);
+  hojaListados().appendRow([id, d.tipo, f[0] || "", f[1] || "", f[2] || "", f[3] || ""]);
   return id;
 }
 
@@ -367,7 +367,7 @@ function editarListado(d) {
   const f = d.fila || [];
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(d.id)) {
-      sh.getRange(i + 1, 3, 1, 3).setValues([[f[0] || "", f[1] || "", f[2] || ""]]);
+      sh.getRange(i + 1, 3, 1, 4).setValues([[f[0] || "", f[1] || "", f[2] || "", f[3] || ""]]);
       return;
     }
   }
