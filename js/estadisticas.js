@@ -31,7 +31,6 @@
       { lab: "Tercerizado", f: (s) => num(s.fila.tercerizado) },
       { lab: "Repuestos en espera", f: (s) => contarRep(s.fila) },
       { lab: "Necesidades", f: (s) => contarNec(s.fila) },
-      { lab: "Km", f: (s) => num(s.fila.km) },
       { lab: "Mecánicos", f: (s) => num(s.fila.cant_mecanicos) },
     ],
     Campo: [

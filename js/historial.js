@@ -75,7 +75,7 @@
   function detalleSupervisores(f) {
     let h = campos([
       ["Supervisor", f.supervisor], ["Ubicación", f.ubicacion], ["Taller", f.taller], ["Obra", f.obra],
-      ["Mecánicos", f.cant_mecanicos], ["Km recorridos", f.km],
+      ["Mecánicos", f.cant_mecanicos],
       ["Órdenes realizadas", f.ordenes], ["Tareas realizadas", f.tareas],
       ["En reparación", f.en_reparacion], ["Tercerizado", f.tercerizado],
       ["Espera de repuesto", f.espera_repuesto], ["Necesidades", f.necesidades_cant],

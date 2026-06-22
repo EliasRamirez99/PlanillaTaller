@@ -48,7 +48,6 @@
     $("ubicacion").value = f.ubicacion || ""; $("taller").value = f.taller || "";
     $("obra").value = f.obra || "";
     $("cant_mecanicos").value = f.cant_mecanicos || "";
-    $("km").value = f.km || "";
     $("ordenes").value = f.ordenes || "";
     $("tareas").value = f.tareas || "";
     $("en_reparacion").value = f.en_reparacion || "";
@@ -83,7 +82,6 @@
       taller: $("taller").value,
       obra: $("obra").value,
       cant_mecanicos: $("cant_mecanicos").value,
-      km: $("km").value,
       ordenes: $("ordenes").value,
       tareas: $("tareas").value,
       en_reparacion: $("en_reparacion").value,

@@ -8,12 +8,22 @@
   const sesion = obtenerSesion("Admin");
   if (!sesion) return;
 
+  // Valores estandarizados (se calculan a partir de lo cargado, sobre todo supervisores).
+  let UBIS = [];
+  let TALLERES = [];
+
+  // cols: { etq, opts?(desplegable), fecha?(formato dd-mm-aaaa) }. Supervisores va primero.
   const TIPOS = [
-    { tipo: "mecanicos",    titulo: "Listado de Mecánicos",    cols: ["Nombre", "Ubicación", "Taller"] },
-    { tipo: "panoleros",    titulo: "Listado de Pañoleros",    cols: ["Nombre", "Ubicación", "Pañol"] },
-    { tipo: "supervisores", titulo: "Listado de Supervisores", cols: ["Nombre", "Ubicación", "Taller"] },
-    { tipo: "obras",        titulo: "Listado de Obras",        cols: ["Ubicación", "Obra"] },
-    { tipo: "semanas",      titulo: "Listado de Semanas",      cols: ["Semana", "Desde", "Hasta"] },
+    { tipo: "supervisores", titulo: "Listado de Supervisores", cols: [
+      { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Taller", opts: () => TALLERES } ] },
+    { tipo: "mecanicos", titulo: "Listado de Mecánicos", cols: [
+      { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Taller", opts: () => TALLERES } ] },
+    { tipo: "panoleros", titulo: "Listado de Pañoleros", cols: [
+      { etq: "Nombre" }, { etq: "Ubicación", opts: () => UBIS }, { etq: "Pañol" } ] },
+    { tipo: "obras", titulo: "Listado de Obras", cols: [
+      { etq: "Ubicación", opts: () => UBIS }, { etq: "Obra" } ] },
+    { tipo: "semanas", titulo: "Listado de Semanas", cols: [
+      { etq: "Semana" }, { etq: "Desde", fecha: true }, { etq: "Hasta", fecha: true } ] },
   ];
 
   const cont = $("ajustes");
@@ -25,9 +35,7 @@
   }
   function post(body) {
     return fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(body),
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body),
     }).then((r) => r.json());
   }
   function guardarCache() {
@@ -37,6 +45,24 @@
     const m = String((err && err.message) || err);
     if (m === "clave") return "Clave de admin incorrecta. Volvé a entrar desde el inicio.";
     return "No se pudo. Revisá tu internet.";
+  }
+
+  // Calcula los valores estandarizados de Ubicación y Taller (base: supervisores).
+  function computarOpts() {
+    const ubi = new Set(), tal = new Set();
+    (ESTADO.supervisores || []).forEach((e) => { if (e.fila[1]) ubi.add(e.fila[1]); if (e.fila[2]) tal.add(e.fila[2]); });
+    (ESTADO.mecanicos || []).forEach((e) => { if (e.fila[1]) ubi.add(e.fila[1]); if (e.fila[2]) tal.add(e.fila[2]); });
+    (ESTADO.obras || []).forEach((e) => { if (e.fila[0]) ubi.add(e.fila[0]); });
+    (LISTADOS.talleres || []).forEach((t) => tal.add(t));
+    UBIS = Array.from(ubi).sort();
+    TALLERES = Array.from(tal).sort();
+  }
+
+  function selectHtml(attr, opts, valor) {
+    const arr = opts.slice();
+    if (valor && arr.indexOf(valor) < 0) arr.unshift(valor);
+    return `<select ${attr}><option value="">—</option>` +
+      arr.map((o) => `<option${o === valor ? " selected" : ""}>${esc(o)}</option>`).join("") + "</select>";
   }
 
   // ---- operaciones (servidor; o local si está en demo) ----
@@ -56,19 +82,15 @@
       .then((o) => { if (!o.ok) throw new Error(o.error || "error"); });
   }
 
-  // ---- carga inicial (siembra los valores base la primera vez) ----
+  // ---- carga inicial ----
   cargar();
   async function cargar() {
     cont.innerHTML = '<p class="status">Cargando…</p>';
-
     if (!CONFIG.APPS_SCRIPT_URL) {
-      TIPOS.forEach((t) => {
-        ESTADO[t.tipo] = (LISTADOS[t.tipo] || []).map((f) => ({ id: "demo-" + Math.random(), fila: f.slice() }));
-      });
+      TIPOS.forEach((t) => { ESTADO[t.tipo] = (LISTADOS[t.tipo] || []).map((f) => ({ id: "demo-" + Math.random(), fila: f.slice() })); });
       pintarTodo();
       return;
     }
-
     try {
       let r = await post({ accion: "listados" });
       if (r && r.ok && !r.seeded) {
@@ -87,6 +109,7 @@
   }
 
   function pintarTodo() {
+    computarOpts();
     cont.innerHTML = "";
     TIPOS.forEach(renderCard);
   }
@@ -94,8 +117,10 @@
   function renderCard(cfg) {
     const card = document.createElement("div");
     card.className = "card-form";
-    const addInputs = cfg.cols.map((etq, i) => `<input type="text" data-new="${i}" placeholder="${esc(etq)}" />`).join("");
-    const ths = cfg.cols.map((etq) => `<th>${esc(etq)}</th>`).join("");
+    const addInputs = cfg.cols.map((c, i) => c.opts
+      ? selectHtml(`data-new="${i}"`, c.opts(), "")
+      : `<input type="text" data-new="${i}" placeholder="${esc(c.etq)}" />`).join("");
+    const ths = cfg.cols.map((c) => `<th>${esc(c.etq)}</th>`).join("");
     card.innerHTML =
       `<h2>${esc(cfg.titulo)} <small data-count></small></h2>` +
       `<div class="add-row">${addInputs}<button type="button" class="primary small" data-add>Agregar</button></div>` +
@@ -107,12 +132,18 @@
     const setStatus = hacerStatus(card.querySelector("[data-status]"));
     let editId = null;
 
+    function celda(c, v) { return esc(c.fecha ? formatearFecha(v) : v); }
+
     function filaHtml(e) {
       if (e.id === editId) {
-        const celdas = cfg.cols.map((_, i) => `<td><input type="text" data-edit="${i}" value="${esc(e.fila[i] || "")}" /></td>`).join("");
+        const celdas = cfg.cols.map((c, i) => {
+          const v = e.fila[i] || "";
+          if (c.opts) return `<td>${selectHtml(`data-edit="${i}"`, c.opts(), v)}</td>`;
+          return `<td><input type="text" data-edit="${i}" value="${esc(c.fecha ? formatearFecha(v) : v)}" /></td>`;
+        }).join("");
         return `<tr data-id="${esc(e.id)}">${celdas}<td class="acc"><button type="button" data-save title="Guardar">✓</button><button type="button" data-cancel title="Cancelar">✗</button></td></tr>`;
       }
-      const celdas = cfg.cols.map((_, i) => `<td>${esc(e.fila[i] || "")}</td>`).join("");
+      const celdas = cfg.cols.map((c, i) => `<td>${celda(c, e.fila[i] || "")}</td>`).join("");
       return `<tr data-id="${esc(e.id)}">${celdas}<td class="acc"><button type="button" data-ed title="Editar">✎</button><button type="button" data-del title="Borrar">🗑</button></td></tr>`;
     }
     function pintar() {
@@ -122,50 +153,40 @@
     }
     pintar();
 
-    // Agregar
     card.querySelector("[data-add]").addEventListener("click", function () {
-      const fila = cfg.cols.map((_, i) => card.querySelector(`input[data-new="${i}"]`).value.trim());
+      const fila = cfg.cols.map((_, i) => card.querySelector(`[data-new="${i}"]`).value.trim());
       if (!fila[0]) { setStatus("Completá al menos el primer campo.", "err"); return; }
       setStatus("Guardando…", "");
       srvAgregar(cfg.tipo, fila).then((id) => {
         (ESTADO[cfg.tipo] = ESTADO[cfg.tipo] || []).push({ id: id, fila: fila });
         guardarCache();
-        card.querySelectorAll("input[data-new]").forEach((i) => (i.value = ""));
+        card.querySelectorAll("[data-new]").forEach((i) => (i.value = ""));
         setStatus("✅ Agregado.", "ok");
         pintar();
       }).catch((err) => setStatus("❌ " + msgErr(err), "err"));
     });
 
-    // Editar / borrar / guardar / cancelar (delegado en el tbody)
     tbody.addEventListener("click", function (ev) {
       const tr = ev.target.closest("tr");
       if (!tr) return;
       const id = tr.dataset.id;
-
-      if (ev.target.matches("[data-ed]")) {
-        editId = id; pintar();
-      } else if (ev.target.matches("[data-cancel]")) {
-        editId = null; pintar();
-      } else if (ev.target.matches("[data-del]")) {
+      if (ev.target.matches("[data-ed]")) { editId = id; pintar(); }
+      else if (ev.target.matches("[data-cancel]")) { editId = null; pintar(); }
+      else if (ev.target.matches("[data-del]")) {
         if (!confirm("¿Borrar esta fila?")) return;
         setStatus("Borrando…", "");
         srvBorrar(id).then(() => {
           ESTADO[cfg.tipo] = (ESTADO[cfg.tipo] || []).filter((e) => e.id !== id);
-          guardarCache();
-          setStatus("✅ Borrado.", "ok");
-          pintar();
+          guardarCache(); setStatus("✅ Borrado.", "ok"); pintar();
         }).catch((err) => setStatus("❌ " + msgErr(err), "err"));
       } else if (ev.target.matches("[data-save]")) {
-        const fila = cfg.cols.map((_, i) => tr.querySelector(`input[data-edit="${i}"]`).value.trim());
+        const fila = cfg.cols.map((_, i) => tr.querySelector(`[data-edit="${i}"]`).value.trim());
         if (!fila[0]) { setStatus("Completá al menos el primer campo.", "err"); return; }
         setStatus("Guardando…", "");
         srvEditar(id, fila).then(() => {
           const e = (ESTADO[cfg.tipo] || []).find((x) => x.id === id);
           if (e) e.fila = fila;
-          guardarCache();
-          editId = null;
-          setStatus("✅ Guardado.", "ok");
-          pintar();
+          guardarCache(); editId = null; setStatus("✅ Guardado.", "ok"); pintar();
         }).catch((err) => setStatus("❌ " + msgErr(err), "err"));
       }
     });
