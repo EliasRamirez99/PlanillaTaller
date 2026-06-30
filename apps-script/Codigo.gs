@@ -77,6 +77,9 @@ function doPost(e) {
     // Editar una carga ya existente (desde el historial).
     if (d.accion === "editar_carga") { editarCarga(d); return json({ ok: true }); }
 
+    // Asignar/reasignar/desasignar un mecánico (desde la planilla de Supervisores).
+    if (d.accion === "asignar_mecanico") { asignarMecanico(d); return json({ ok: true }); }
+
     switch (d.planilla) {
       case "Supervisores":  guardarSupervisores(d); break;
       case "Estacionarios": guardarEstacionarios(d); break;
@@ -372,6 +375,19 @@ function editarListado(d) {
     }
   }
   throw new Error("id no encontrado");
+}
+
+// Cambia la ubicación/taller de un mecánico (col4=v2=ubicacion, col5=v3=taller).
+function asignarMecanico(d) {
+  const sh = hojaListados();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(d.id) && data[i][1] === "mecanicos") {
+      sh.getRange(i + 1, 4, 1, 2).setValues([[d.ubicacion || "", d.taller || ""]]);
+      return;
+    }
+  }
+  throw new Error("mecanico no encontrado");
 }
 
 function borrarListado(d) {

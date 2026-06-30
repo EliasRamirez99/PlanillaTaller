@@ -59,6 +59,12 @@ function formatearFecha(v) {
   return s;
 }
 
+// Texto del desplegable de semana: "Semana 1 (10-05-2026 al 16-05-2026)".
+function textoSemana(s) {
+  const d = formatearFecha(s[1]), h = formatearFecha(s[2]);
+  return s[0] + (d || h ? ` (${d}${h ? " al " + h : ""})` : "");
+}
+
 // Autocompleta Desde/Hasta a partir de la semana elegida (en formato dd-mm-aaaa).
 function enlazarSemana(selId, desdeId, hastaId) {
   $(selId).addEventListener("change", function () {
@@ -220,8 +226,14 @@ function llenarDinamica(tbodyId, ctrl, items, cols) {
   if (first) first.dispatchEvent(new Event("input", { bubbles: true })); // recalcula contadores
 }
 
-// Muestra una lista simple en un modal (crea el modal si no existe).
-function mostrarLista(titulo, lineas) {
+// Llena un <select> de semanas mostrando "Semana N (dd-mm-aaaa al dd-mm-aaaa)".
+function poblarSemanas(sel) {
+  poblarSelect(sel, LISTADOS.semanas, (s) => s[0],
+    (s) => s[0] + " (" + formatearFecha(s[1]) + " al " + formatearFecha(s[2]) + ")");
+}
+
+// Modal genérico: muestra HTML y devuelve el contenedor del cuerpo (para enganchar eventos).
+function modalHTML(html) {
   let ov = document.getElementById("lista-modal");
   if (!ov) {
     ov = document.createElement("div");
@@ -231,10 +243,17 @@ function mostrarLista(titulo, lineas) {
     document.body.appendChild(ov);
     ov.addEventListener("click", (e) => { if (e.target === ov || e.target.classList.contains("modal-close")) ov.style.display = "none"; });
   }
-  const e2 = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  document.getElementById("lista-body").innerHTML = `<h3>${e2(titulo)}</h3>` +
-    (lineas.length ? '<ul class="lista-ul">' + lineas.map((l) => `<li>${e2(l)}</li>`).join("") + "</ul>" : "<p>(sin datos)</p>");
+  const body = document.getElementById("lista-body");
+  body.innerHTML = html;
   ov.style.display = "flex";
+  return body;
+}
+
+// Muestra una lista simple en un modal.
+function mostrarLista(titulo, lineas) {
+  const e2 = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  modalHTML(`<h3>${e2(titulo)}</h3>` +
+    (lineas.length ? '<ul class="lista-ul">' + lineas.map((l) => `<li>${e2(l)}</li>`).join("") + "</ul>" : "<p>(sin datos)</p>"));
 }
 
 // Semana anterior (según el orden de LISTADOS.semanas).

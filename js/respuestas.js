@@ -20,7 +20,7 @@
   }
 
   // Desplegable de semanas
-  poblarSelect($("resp-semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+  poblarSemanas($("resp-semana"));
   $("resp-semana").addEventListener("change", onSemana);
 
   function onSemana() {

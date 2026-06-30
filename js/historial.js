@@ -136,8 +136,8 @@
     if (ti) h += `<h4>Insumos utilizados</h4>${ti}`;
     const tr = tabla(["Obra", "Repuesto", "Fecha de pedido"], (sub.repuestos || []).map((r) => [r.obra, r.repuesto, r.fecha]));
     if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
-    const tp = tabla(["Obra", "Pendiente"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente]));
-    if (tp) h += `<h4>Pedidos / pendientes</h4>${tp}`;
+    const tp = tabla(["Obra", "Necesidad"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente]));
+    if (tp) h += `<h4>Necesidades</h4>${tp}`;
     return h;
   }
 

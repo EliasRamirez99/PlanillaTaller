@@ -167,6 +167,23 @@ button.ghost {
 .lista-ul { columns: 2; list-style: disc; padding-left: 20px; margin: 8px 0; font-size: 14px; }
 .lista-ul li { margin: 2px 0; break-inside: avoid; }
 
+/* ---- Agregar equipo fuera de la lista (estacionarios) ---- */
+.add-equipo { display: flex; gap: 6px; margin-top: 10px; }
+.add-equipo input { flex: 1; min-width: 0; }
+tr .row-del {
+  border: none; background: none; color: var(--rojo, #c0392b); cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 0 2px; vertical-align: middle;
+}
+
+/* ---- Gestor editable de mecánicos (Supervisores) ---- */
+.modal-nota { font-size: 13px; color: #666; margin: 0 0 10px; }
+.mec-buscar { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+.mec-scroll { max-height: 50vh; overflow: auto; }
+.mec-tabla { width: 100%; font-size: 14px; }
+.mec-tabla th, .mec-tabla td { padding: 5px 8px; }
+.mec-tabla select { width: 100%; }
+.mec-tabla em { color: #999; }
+
 /* ---- "Ver anteriores" (paginación de historiales) ---- */
 .ver-mas { text-align: center; margin: 12px 0; }
 

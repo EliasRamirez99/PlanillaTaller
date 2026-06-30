@@ -16,7 +16,7 @@
   const DL = { obra: "dl-obras" };
 
   prepararListados(function () {
-    poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+    poblarSemanas($("semana"));
     const campoSup = (LISTADOS.supervisores || []).filter((s) => s[2] === "Campo");
     poblarSelect($("supervisor"), campoSup, (s) => s[0], (s) => s[0]);
     $("dl-obras").innerHTML = (LISTADOS.obras || []).map((o) => `<option value="${o[1]}"></option>`).join("");

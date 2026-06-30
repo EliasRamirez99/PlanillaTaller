@@ -25,7 +25,7 @@
   ];
 
   prepararListados(function () {
-    poblarSelect($("semana"), LISTADOS.semanas, (s) => s[0], (s) => s[0]);
+    poblarSemanas($("semana"));
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
     enlazarSemana("semana", "desde", "hasta");
     $("ubicacion").addEventListener("change", recalcPanoleros);
@@ -33,6 +33,12 @@
       mostrarLista("Pañoleros — " + ($("ubicacion").value || "?"), PANS.map((p) => p[0] + (p[3] ? " (" + p[3] + ")" : ""))));
 
     construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
+    // OR Cargadas: sólo aplica "Total"; deshabilitamos las otras dos columnas.
+    const orTr = document.querySelector('#tabla-movimientos tbody tr[data-clave="or_cargadas"]');
+    if (orTr) ["items", "repuestos"].forEach((c) => {
+      const inp = orTr.querySelector(`input[data-col="${c}"]`);
+      if (inp) { inp.disabled = true; inp.value = ""; inp.placeholder = "—"; }
+    });
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
     const recalcTransf = filaTotal("tabla-transferencias", COLS3, "Total");
 

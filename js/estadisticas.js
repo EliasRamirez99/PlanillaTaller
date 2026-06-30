@@ -58,6 +58,9 @@
     } else if (AMBITO === "Campo") {
       const sup = $("est-sup").value;
       if (sup) subs = subs.filter((s) => s.fila.supervisor === sup);
+    } else if (AMBITO === "Almacen") {
+      const u = $("est-ubic").value;
+      if (u) subs = subs.filter((s) => s.fila.ubicacion === u);
     }
     return subs;
   }
@@ -142,6 +145,10 @@
     $("est-taller").innerHTML = '<option value="">Todos los talleres</option>' +
       (LISTADOS.talleres || []).map((t) => `<option>${esc(t)}</option>`).join("");
   }
+  function pobUbic() {
+    const ubis = Array.from(new Set(hist().filter((s) => s.planilla === "Almacen" && s.fila).map((s) => s.fila.ubicacion).filter(Boolean))).sort();
+    $("est-ubic").innerHTML = '<option value="">Todos</option>' + ubis.map((u) => `<option>${esc(u)}</option>`).join("");
+  }
   function pobSup() {
     let list;
     if (AMBITO === "Campo") {
@@ -167,18 +174,23 @@
     document.querySelectorAll(".seg-btn").forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
     AMBITO = b.dataset.amb;
+    $("est-f-ubic").style.display = AMBITO === "Almacen" ? "" : "none";
     $("est-f-taller").style.display = AMBITO === "Supervisores" ? "" : "none";
     $("est-f-sup").style.display = (AMBITO === "Supervisores" || AMBITO === "Campo") ? "" : "none";
+    pobUbic();
     pobSup();
     render();
   }));
+  $("est-ubic").addEventListener("change", render);
   $("est-taller").addEventListener("change", () => { pobSup(); render(); });
   $("est-sup").addEventListener("change", render);
   $("est-recargar").addEventListener("click", recargar);
   const tabEst = document.querySelector('.tab[data-tab="estadisticas"]');
-  if (tabEst) tabEst.addEventListener("click", render);
+  if (tabEst) tabEst.addEventListener("click", () => { pobUbic(); render(); });
 
+  $("est-f-ubic").style.display = ""; // ámbito Almacén por defecto
   pobTaller();
+  pobUbic();
   pobSup();
   render();
 })();
