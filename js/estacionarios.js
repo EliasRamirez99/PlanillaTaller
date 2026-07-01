@@ -5,7 +5,7 @@
   "use strict";
 
   const SECTOR = "Panol";
-  const COLS_EQ = ["total", "disponible", "reparacion", "demora", "observaciones"];
+  const COLS_EQ = ["operativa", "no_operativa", "total"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Estacionarios");
 
@@ -17,6 +17,13 @@
     const filasEquipos = LISTADOS.equiposEstacionarios.map((eq) => [eq, eq]);
     construirFilasEtiqueta("tabla-equipos", filasEquipos, COLS_EQ);
 
+    const tbEq = document.querySelector("#tabla-equipos tbody");
+    // La columna Total es automática (Operativa + No Operativa).
+    tbEq.querySelectorAll('input[data-col="total"]').forEach((i) => { i.readOnly = true; i.classList.add("auto"); });
+    tbEq.addEventListener("input", function (e) {
+      if (e.target.matches('input[data-col="operativa"], input[data-col="no_operativa"]')) recalcTotal(e.target.closest("tr"));
+    });
+
     // Agregar un equipo que no está en la lista predefinida.
     $("add-equipo").addEventListener("click", function () {
       const n = $("nuevo-equipo").value.trim();
@@ -24,7 +31,7 @@
       agregarEquipo(n);
       $("nuevo-equipo").value = "";
     });
-    document.querySelector("#tabla-equipos tbody").addEventListener("click", function (e) {
+    tbEq.addEventListener("click", function (e) {
       if (e.target.classList.contains("row-del")) e.target.closest("tr").remove();
     });
 
@@ -49,8 +56,20 @@
     (ed.equipos || []).forEach((e) => {
       let tr = Array.from(document.querySelectorAll("#tabla-equipos tbody tr")).find((x) => x.dataset.clave === e.equipo);
       if (!tr && cat.indexOf(e.equipo) < 0) tr = agregarEquipo(e.equipo); // equipo fuera de la lista
-      if (tr) COLS_EQ.forEach((c) => { const inp = tr.querySelector(`input[data-col="${c}"]`); if (inp) inp.value = e[c] || ""; });
+      if (tr) { COLS_EQ.forEach((c) => { const inp = tr.querySelector(`input[data-col="${c}"]`); if (inp) inp.value = e[c] || ""; }); recalcTotal(tr); }
     });
+  }
+
+  // Total = Operativa + No Operativa (vacío si no hay datos en la fila).
+  function recalcTotal(tr) {
+    const opI = tr.querySelector('input[data-col="operativa"]');
+    const noI = tr.querySelector('input[data-col="no_operativa"]');
+    const totI = tr.querySelector('input[data-col="total"]');
+    if (!totI) return;
+    const hayAlgo = (opI && opI.value.trim() !== "") || (noI && noI.value.trim() !== "");
+    const op = opI ? parseFloat(opI.value) || 0 : 0;
+    const no = noI ? parseFloat(noI.value) || 0 : 0;
+    totI.value = hayAlgo ? op + no : "";
   }
 
   function agregarEquipo(nombre) {
@@ -68,6 +87,7 @@
       const td = document.createElement("td");
       const inp = document.createElement("input");
       inp.type = "text"; inp.setAttribute("data-col", c);
+      if (c === "total") { inp.readOnly = true; inp.classList.add("auto"); }
       td.appendChild(inp); tr.appendChild(td);
     });
     tb.appendChild(tr);

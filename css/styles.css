@@ -119,6 +119,7 @@ table.grid th, table.grid td {
 }
 table.grid th { background: var(--verde); font-weight: 600; }
 table.grid td input { width: 100%; border: none; background: transparent; padding: 6px; font-size: 13px; font-family: inherit; }
+table.grid td input.auto { background: #eef2f6; color: #555; font-weight: 600; text-align: center; }
 table.grid td.num { width: 42px; text-align: center; background: #f0f0f0; font-weight: 600; }
 table.grid td.label { background: #f0f0f0; font-weight: 600; text-align: left; padding-left: 10px; white-space: nowrap; }
 table.grid tr.total-row td { background: #eaf3e0; font-weight: 700; }

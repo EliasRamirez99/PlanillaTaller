@@ -34,7 +34,7 @@ const VEH = ["dominio", "asignacion", "km", "litros"];    // vehículos utilizad
 const COLS3 = ["total", "items", "repuestos"];            // movimientos / transferencias
 const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
 const TRANSF_KEYS = ["720", "745", "758", "760", "base7", "base4"];
-const EQ_COLS = ["total", "disponible", "reparacion", "demora", "observaciones"];
+const EQ_COLS = ["operativa", "no_operativa", "total"];
 
 // Tope de filas guardadas para Repuestos en espera y Necesidades (Supervisores y Almacén).
 const MAX_LISTA = 33;
@@ -137,12 +137,12 @@ function guardarSupervisores(d) {
 /* ---------- Estacionarios (1 fila por equipo cargado) ---------- */
 function encabezadosEstacionarios() {
   return ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros",
-    "equipo", "total", "disponible", "reparacion", "demora", "observaciones"];
+    "equipo", "operativa", "no_operativa", "total"];
 }
 
 function filasEstacionarios(d, ts) {
   return (d.equipos || []).map((e) => [ts, d.semana, d.desde, d.hasta, d.ubicacion,
-    d.cant_panoleros, e.equipo, e.total, e.disponible, e.reparacion, e.demora, e.observaciones]);
+    d.cant_panoleros, e.equipo, e.operativa, e.no_operativa, e.total]);
 }
 
 function guardarEstacionarios(d) {
@@ -298,8 +298,7 @@ function leerHistorial() {
         };
       }
       grupos[k].equipos.push({
-        equipo: o.equipo, total: o.total, disponible: o.disponible,
-        reparacion: o.reparacion, demora: o.demora, observaciones: o.observaciones,
+        equipo: o.equipo, operativa: o.operativa, no_operativa: o.no_operativa, total: o.total,
       });
     }
     Object.keys(grupos).forEach((k) => out.push(grupos[k]));
@@ -526,10 +525,9 @@ function hoja(nombre, encabezados) {
     sh.setFrozenRows(1);
     return sh;
   }
-  // Si subimos los límites, completamos los encabezados que falten.
-  if (sh.getLastColumn() < encabezados.length) {
-    sh.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
-  }
+  // El encabezado siempre debe reflejar el esquema actual (por si cambian/achican
+  // las columnas). Reescribimos las primeras N celdas de la fila 1.
+  sh.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
   return sh;
 }
 

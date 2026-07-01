@@ -90,8 +90,8 @@
   function detalleEstacionarios(sub) {
     const f = sub.fila;
     let h = campos([["Ubicación", f.ubicacion], ["Pañoleros", f.cant_panoleros]]);
-    const filas = (sub.equipos || []).map((e) => [e.equipo, e.total, e.disponible, e.reparacion, e.demora, e.observaciones]);
-    const t = tabla(["Equipo", "Total", "Disponible", "Reparación", "Demora", "Observaciones"], filas);
+    const filas = (sub.equipos || []).map((e) => [e.equipo, e.operativa, e.no_operativa, e.total]);
+    const t = tabla(["Equipo", "Operativa", "No Operativa", "Total"], filas);
     if (t) h += `<h4>Equipos</h4>${t}`;
     return h;
   }
