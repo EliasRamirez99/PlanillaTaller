@@ -68,7 +68,7 @@
   }
   function necesidadesDesdeFila(f, n) {
     const filas = [];
-    for (let i = 1; i <= n; i++) filas.push([f[`nec${i}`] || "", f[`necfecha${i}`] || ""]);
+    for (let i = 1; i <= n; i++) filas.push([f[`nec${i}`] || "", formatearFecha(f[`necfecha${i}`])]);
     return tabla(["Necesidad", "Fecha de pedido"], filas);
   }
 
@@ -144,7 +144,7 @@
     if (tv) h += `<h4>Vehículos utilizados</h4>${tv}`;
     const tr = tabla(["Obra", "Repuesto", "Fecha de pedido"], (sub.repuestos || []).map((r) => [r.obra, r.repuesto, r.fecha]));
     if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
-    const tp = tabla(["Obra", "Necesidad", "Fecha de pedido"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente, p.fecha]));
+    const tp = tabla(["Obra", "Necesidad", "Fecha de pedido"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente, formatearFecha(p.fecha)]));
     if (tp) h += `<h4>Necesidades</h4>${tp}`;
     return h;
   }

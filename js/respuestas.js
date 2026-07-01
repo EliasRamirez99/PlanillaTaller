@@ -55,12 +55,12 @@
       if (s.planilla === "Supervisores" || s.planilla === "Almacen") {
         for (let i = 1; i <= MAXF; i++) {
           const ne = f["nec" + i];
-          if (val(ne)) necesidades.push({ necesidad: ne, origen: origen, fecha_pedido: f["necfecha" + i] || "", respuesta: "" });
+          if (val(ne)) necesidades.push({ necesidad: ne, origen: origen, fecha_pedido: formatearFecha(f["necfecha" + i]), respuesta: "" });
         }
       } else if (s.planilla === "Campo") {
         (s.pendientes || []).forEach((p) => {
           const txt = [p.obra, p.pendiente].filter(Boolean).join(": ");
-          if (val(txt)) necesidades.push({ necesidad: txt, origen: origen, fecha_pedido: p.fecha || "", respuesta: "" });
+          if (val(txt)) necesidades.push({ necesidad: txt, origen: origen, fecha_pedido: formatearFecha(p.fecha), respuesta: "" });
         });
       }
     });
@@ -226,7 +226,7 @@
       (x.repuestos || []).map((r) => [r.dominio, r.repuesto, r.fecha_pedido, r.tiempo_estimado]));
     if (tr) h += `<h4>Espera de Repuestos</h4>${tr}`;
     const tn = tablaDet(["Necesidad", "Fecha pedido", "Respuesta"],
-      (x.necesidades || []).map((n) => [n.necesidad, n.fecha_pedido, n.respuesta]));
+      (x.necesidades || []).map((n) => [n.necesidad, formatearFecha(n.fecha_pedido), n.respuesta]));
     if (tn) h += `<h4>Necesidades</h4>${tn}`;
     $("detalle-body").innerHTML = h;
     $("detalle").style.display = "flex";

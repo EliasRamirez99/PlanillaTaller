@@ -60,7 +60,7 @@
         const necs = [];
         for (let i = 1; i <= 33; i++) {
           const ne = res.sub.fila["nec" + i];
-          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: res.sub.fila["necfecha" + i] });
+          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: formatearFecha(res.sub.fila["necfecha" + i]) });
         }
         if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
         llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
@@ -188,7 +188,7 @@
     recalcTransf();
 
     const necs = [];
-    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: f["necfecha" + i] }); }
+    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: formatearFecha(f["necfecha" + i]) }); }
     llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
 
     const ins = [];

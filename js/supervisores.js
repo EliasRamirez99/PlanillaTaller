@@ -164,7 +164,7 @@
   }
   function leerNecsDeFila(f) {
     const r = [];
-    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: f["necfecha" + i] });
+    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: formatearFecha(f["necfecha" + i]) });
     return r;
   }
 
