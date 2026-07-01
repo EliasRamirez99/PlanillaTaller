@@ -68,8 +68,8 @@
   }
   function necesidadesDesdeFila(f, n) {
     const filas = [];
-    for (let i = 1; i <= n; i++) filas.push([f[`nec${i}`] || ""]);
-    return tabla(["Necesidad"], filas);
+    for (let i = 1; i <= n; i++) filas.push([f[`nec${i}`] || "", f[`necfecha${i}`] || ""]);
+    return tabla(["Necesidad", "Fecha de pedido"], filas);
   }
 
   function detalleSupervisores(f) {
@@ -116,6 +116,11 @@
     const tt = tabla(["Destino", "Total", "Items dif.", "Repuestos"], tr);
     if (tt) h += `<h4>Transferencias de Base 4 a:</h4>${tt}`;
 
+    const vehF = [];
+    for (let i = 1; i <= 33; i++) vehF.push([f[`veh${i}_dominio`] || "", f[`veh${i}_asignacion`] || "", f[`veh${i}_km`] || "", f[`veh${i}_litros`] || ""]);
+    const veh = tabla(["Dominio", "Asignación", "Km", "Litros"], vehF);
+    if (veh) h += `<h4>Vehículos utilizados</h4>${veh}`;
+
     const insF = [];
     for (let i = 1; i <= 33; i++) insF.push([f[`ins${i}_insumo`] || "", f[`ins${i}_cantidad`] || ""]);
     const ins = tabla(["Insumo", "Cantidad"], insF);
@@ -139,7 +144,7 @@
     if (tv) h += `<h4>Vehículos utilizados</h4>${tv}`;
     const tr = tabla(["Obra", "Repuesto", "Fecha de pedido"], (sub.repuestos || []).map((r) => [r.obra, r.repuesto, r.fecha]));
     if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
-    const tp = tabla(["Obra", "Necesidad"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente]));
+    const tp = tabla(["Obra", "Necesidad", "Fecha de pedido"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente, p.fecha]));
     if (tp) h += `<h4>Necesidades</h4>${tp}`;
     return h;
   }

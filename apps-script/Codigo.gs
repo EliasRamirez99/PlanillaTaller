@@ -30,6 +30,7 @@ const CLAVES = {
 // Columnas reutilizadas.
 const REP = ["dominio", "repuesto", "tiempo"];            // repuestos en espera
 const INS = ["insumo", "cantidad"];                       // insumos utilizados (Almacén)
+const VEH = ["dominio", "asignacion", "km", "litros"];    // vehículos utilizados (Almacén)
 const COLS3 = ["total", "items", "repuestos"];            // movimientos / transferencias
 const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
 const TRANSF_KEYS = ["720", "745", "758", "760", "base7", "base4"];
@@ -104,6 +105,7 @@ function encabezadosSupervisores() {
     "en_reparacion", "tercerizado", "espera_repuesto", "necesidades_cant"];
   for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
+  for (let i = 1; i <= MAX_LISTA; i++) h.push(`necfecha${i}`);
   return h;
 }
 
@@ -120,6 +122,10 @@ function filaSupervisores(d, ts) {
   for (let i = 0; i < MAX_LISTA; i++) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
+  }
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const n = (d.necesidades && d.necesidades[i]) || {};
+    fila.push(n.fecha || "");
   }
   return fila;
 }
@@ -153,6 +159,8 @@ function encabezadosAlmacen() {
   for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
   for (let i = 1; i <= MAX_LISTA; i++) INS.forEach((c) => h.push(`ins${i}_${c}`));
+  for (let i = 1; i <= MAX_LISTA; i++) h.push(`necfecha${i}`);
+  for (let i = 1; i <= MAX_LISTA; i++) VEH.forEach((c) => h.push(`veh${i}_${c}`));
   return h;
 }
 
@@ -174,6 +182,14 @@ function filaAlmacen(d, ts) {
   for (let i = 0; i < MAX_LISTA; i++) {
     const s = (d.insumos && d.insumos[i]) || {};
     INS.forEach((c) => fila.push(s[c] || ""));
+  }
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const n = (d.necesidades && d.necesidades[i]) || {};
+    fila.push(n.fecha || "");
+  }
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const v = (d.vehiculos && d.vehiculos[i]) || {};
+    VEH.forEach((c) => fila.push(v[c] || ""));
   }
   return fila;
 }
@@ -447,7 +463,7 @@ function leerRespuestas(semana) {
     if (data[i][1] === "repuesto") {
       out.repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
     } else if (data[i][1] === "necesidad") {
-      out.necesidades.push({ necesidad: data[i][6], respuesta: data[i][7] });
+      out.necesidades.push({ necesidad: data[i][6], respuesta: data[i][7], fecha_pedido: data[i][4] });
     }
   }
   return out;
@@ -467,7 +483,7 @@ function guardarRespuestas(d) {
     keep.push([d.semana, "repuesto", r.dominio || "", r.repuesto || "", r.fecha_pedido || "", r.tiempo_estimado || "", "", "", ts]);
   });
   (d.necesidades || []).forEach((n) => {
-    keep.push([d.semana, "necesidad", "", "", "", "", n.necesidad || "", n.respuesta || "", ts]);
+    keep.push([d.semana, "necesidad", "", "", n.fecha_pedido || "", "", n.necesidad || "", n.respuesta || "", ts]);
   });
   sh.clearContents();
   sh.getRange(1, 1, keep.length, header.length).setValues(keep);
@@ -487,7 +503,7 @@ function historialRespuestas() {
     if (data[i][1] === "repuesto") {
       map[sem].repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
     } else if (data[i][1] === "necesidad") {
-      map[sem].necesidades.push({ necesidad: data[i][6], respuesta: data[i][7] });
+      map[sem].necesidades.push({ necesidad: data[i][6], respuesta: data[i][7], fecha_pedido: data[i][4] });
     }
   }
   const arr = Object.keys(map).map((k) => map[k]);

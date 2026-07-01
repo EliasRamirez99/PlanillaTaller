@@ -55,12 +55,12 @@
       if (s.planilla === "Supervisores" || s.planilla === "Almacen") {
         for (let i = 1; i <= MAXF; i++) {
           const ne = f["nec" + i];
-          if (val(ne)) necesidades.push({ necesidad: ne, origen: origen, respuesta: "" });
+          if (val(ne)) necesidades.push({ necesidad: ne, origen: origen, fecha_pedido: f["necfecha" + i] || "", respuesta: "" });
         }
       } else if (s.planilla === "Campo") {
         (s.pendientes || []).forEach((p) => {
           const txt = [p.obra, p.pendiente].filter(Boolean).join(": ");
-          if (val(txt)) necesidades.push({ necesidad: txt, origen: origen, respuesta: "" });
+          if (val(txt)) necesidades.push({ necesidad: txt, origen: origen, fecha_pedido: p.fecha || "", respuesta: "" });
         });
       }
     });
@@ -89,9 +89,9 @@
     if (!n.length) {
       html += '<p class="status">No hay necesidades cargadas para esta semana.</p>';
     } else {
-      html += '<table class="grid resp"><thead><tr><th>Necesidad</th><th>Origen</th><th>Respuesta</th></tr></thead><tbody>';
+      html += '<table class="grid resp"><thead><tr><th>Necesidad</th><th>Origen</th><th>Fecha pedido</th><th>Respuesta</th></tr></thead><tbody>';
       n.forEach((x, i) => {
-        html += `<tr><td>${esc(x.necesidad)}</td><td>${esc(x.origen)}</td>` +
+        html += `<tr><td>${esc(x.necesidad)}</td><td>${esc(x.origen)}</td><td>${esc(x.fecha_pedido)}</td>` +
           `<td><input type="text" data-nec="${i}" value="${esc(x.respuesta)}" /></td></tr>`;
       });
       html += "</tbody></table>";
@@ -142,7 +142,7 @@
       accion: "guardar_respuestas",
       semana: ACTUAL.semana,
       repuestos: ACTUAL.repuestos.map((x) => ({ dominio: x.dominio, repuesto: x.repuesto, fecha_pedido: x.fecha_pedido, tiempo_estimado: x.tiempo_estimado })),
-      necesidades: ACTUAL.necesidades.map((x) => ({ necesidad: x.necesidad, respuesta: x.respuesta })),
+      necesidades: ACTUAL.necesidades.map((x) => ({ necesidad: x.necesidad, respuesta: x.respuesta, fecha_pedido: x.fecha_pedido })),
     })
       .then((out) => {
         if (out && out.ok) { setStatus("✅ Respuestas guardadas.", "ok"); cargarRespHist(); }
@@ -225,8 +225,8 @@
     const tr = tablaDet(["Dominio", "Repuesto", "Fecha pedido", "Tiempo estimado"],
       (x.repuestos || []).map((r) => [r.dominio, r.repuesto, r.fecha_pedido, r.tiempo_estimado]));
     if (tr) h += `<h4>Espera de Repuestos</h4>${tr}`;
-    const tn = tablaDet(["Necesidad", "Respuesta"],
-      (x.necesidades || []).map((n) => [n.necesidad, n.respuesta]));
+    const tn = tablaDet(["Necesidad", "Fecha pedido", "Respuesta"],
+      (x.necesidades || []).map((n) => [n.necesidad, n.fecha_pedido, n.respuesta]));
     if (tn) h += `<h4>Necesidades</h4>${tn}`;
     $("detalle-body").innerHTML = h;
     $("detalle").style.display = "flex";

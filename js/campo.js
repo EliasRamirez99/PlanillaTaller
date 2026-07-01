@@ -11,7 +11,7 @@
   const C_OBRAS = ["obra", "ordenes", "tareas"];
   const C_VEH = ["dominio", "asignacion", "km", "litros"];
   const C_REP = ["obra", "repuesto", "fecha"];
-  const C_PEND = ["obra", "pendiente"];
+  const C_PEND = ["obra", "pendiente", "fecha"];
   const DL = { obra: "dl-obras" };
 
   prepararListados(function () {

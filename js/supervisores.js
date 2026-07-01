@@ -24,13 +24,13 @@
     $("ver-mecanicos").addEventListener("click", abrirGestionMecanicos);
 
     const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33);
-    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-repuestos", repCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
     // Cargar repuestos/necesidades de la semana anterior (misma persona).
     $("prev-repuestos").addEventListener("click", () => cargarAnterior(repCtrl, COLS_REP, leerRepsDeFila));
-    $("prev-necesidades").addEventListener("click", () => cargarAnterior(necCtrl, ["necesidad"], leerNecsDeFila));
+    $("prev-necesidades").addEventListener("click", () => cargarAnterior(necCtrl, ["necesidad", "fecha"], leerNecsDeFila));
 
     if (enEd) prefill(edicion.fila, repCtrl, necCtrl);
 
@@ -164,7 +164,7 @@
   }
   function leerNecsDeFila(f) {
     const r = [];
-    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i] });
+    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: f["necfecha" + i] });
     return r;
   }
 
@@ -193,7 +193,7 @@
     $("en_reparacion").value = f.en_reparacion || "";
     $("tercerizado").value = f.tercerizado || "";
     llenarDinamica("tabla-repuestos", repCtrl, leerRepsDeFila(f), COLS_REP);
-    llenarDinamica("tabla-necesidades", necCtrl, leerNecsDeFila(f), ["necesidad"]);
+    llenarDinamica("tabla-necesidades", necCtrl, leerNecsDeFila(f), ["necesidad", "fecha"]);
   }
 
   function recolectar() {
@@ -215,7 +215,7 @@
       espera_repuesto: $("espera_repuesto").value,
       necesidades_cant: $("necesidades_cant").value,
       repuestos: leerTabla("tabla-repuestos", COLS_REP),
-      necesidades: leerTabla("tabla-necesidades", ["necesidad"]),
+      necesidades: leerTabla("tabla-necesidades", ["necesidad", "fecha"]),
     };
     if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }
     return d;

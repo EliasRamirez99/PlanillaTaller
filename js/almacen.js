@@ -7,6 +7,7 @@
   const SECTOR = "Almacen";
   const COLS3 = ["total", "items", "repuestos"];
   const C_INS = ["insumo", "cantidad"];
+  const C_VEH = ["dominio", "asignacion", "km", "litros"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Almacen");
   let PANS = []; // pañoleros de la ubicación elegida (para "Ver listado")
@@ -42,10 +43,13 @@
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
     const recalcTransf = filaTotal("tabla-transferencias", COLS3, "Total");
 
+    const vehCtrl = tablaDinamica("tabla-vehiculos", C_VEH, null, null);
+    wireAgregar("add-vehiculos", vehCtrl);
+
     const insCtrl = tablaDinamica("tabla-insumos", C_INS, null, null);
     wireAgregar("add-insumos", insCtrl);
 
-    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-necesidades", necCtrl);
     $("prev-necesidades").addEventListener("click", () => {
       const ub = $("ubicacion").value, sem = $("semana").value;
@@ -54,13 +58,16 @@
         if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
         if (!res.sub) { alert("No se encontró carga de " + ub + " en " + res.semanaAnt + "."); return; }
         const necs = [];
-        for (let i = 1; i <= 33; i++) { const ne = res.sub.fila["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne }); }
+        for (let i = 1; i <= 33; i++) {
+          const ne = res.sub.fila["nec" + i];
+          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: res.sub.fila["necfecha" + i] });
+        }
         if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
-        llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad"]);
+        llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
       });
     });
 
-    if (enEd) prefill(edicion.fila, necCtrl, insCtrl, recalcTransf);
+    if (enEd) prefill(edicion.fila, necCtrl, insCtrl, vehCtrl, recalcTransf);
 
     conectarForm(recolectar, validar, function () {
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
@@ -164,7 +171,7 @@
     });
   }
 
-  function prefill(f, necCtrl, insCtrl, recalcTransf) {
+  function prefill(f, necCtrl, insCtrl, vehCtrl, recalcTransf) {
     document.querySelector(".titulo").textContent = "EDITANDO CARGA — ALMACÉN";
     document.querySelector("button.primary").textContent = "Guardar cambios";
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
@@ -181,8 +188,8 @@
     recalcTransf();
 
     const necs = [];
-    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne }); }
-    llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad"]);
+    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: f["necfecha" + i] }); }
+    llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
 
     const ins = [];
     for (let i = 1; i <= 33; i++) {
@@ -190,6 +197,14 @@
       if (("" + (nm || "")).trim() || ("" + (ca || "")).trim()) ins.push({ insumo: nm, cantidad: ca });
     }
     llenarDinamica("tabla-insumos", insCtrl, ins, C_INS);
+
+    const vehs = [];
+    for (let i = 1; i <= 33; i++) {
+      const o = {}; let algo = false;
+      C_VEH.forEach((c) => { const v = f["veh" + i + "_" + c]; o[c] = v; if (("" + (v || "")).trim()) algo = true; });
+      if (algo) vehs.push(o);
+    }
+    llenarDinamica("tabla-vehiculos", vehCtrl, vehs, C_VEH);
   }
 
   function recolectar() {
@@ -205,8 +220,9 @@
       movimientos: leerTablaEtiqueta("tabla-movimientos", COLS3),
       transferencias: leerTablaEtiqueta("tabla-transferencias", COLS3),
       necesidades_cant: $("necesidades_cant").value,
-      necesidades: leerTabla("tabla-necesidades", ["necesidad"]),
+      necesidades: leerTabla("tabla-necesidades", ["necesidad", "fecha"]),
       insumos: leerTabla("tabla-insumos", C_INS),
+      vehiculos: leerTabla("tabla-vehiculos", C_VEH),
     };
     if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }
     return d;
