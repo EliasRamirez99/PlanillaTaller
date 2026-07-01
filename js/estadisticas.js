@@ -12,6 +12,7 @@
   const val = (x) => x != null && String(x).trim() !== "";
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   function contarNec(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["nec" + i])) c++; return c; }
+  function contarIns(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["ins" + i + "_insumo"])) c++; return c; }
   function contarRep(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["rep" + i + "_dominio"]) || val(f["rep" + i + "_repuesto"])) c++; return c; }
   function abrev(s) { const m = String(s).match(/(\d+)/); return m ? "S" + m[1] : s; }
   function hist() { try { return JSON.parse(localStorage.getItem("ops_historial") || "[]") || []; } catch (e) { return []; } }
@@ -23,6 +24,7 @@
       { lab: "Remitos Ingreso", f: (s) => num(s.fila.remitos_ingreso_total) },
       { lab: "Transferencias", f: (s) => TRANSF.reduce((a, k) => a + num(s.fila["transf_" + k + "_total"]), 0) },
       { lab: "Necesidades", f: (s) => contarNec(s.fila) },
+      { lab: "Insumos", f: (s) => contarIns(s.fila) },
     ],
     Supervisores: [
       { lab: "Órdenes", f: (s) => num(s.fila.ordenes) },
@@ -40,7 +42,6 @@
       { lab: "Vehículos", f: (s) => (s.vehiculos || []).filter((v) => val(v.dominio)).length },
       { lab: "Km", f: (s) => (s.vehiculos || []).reduce((a, v) => a + num(v.km), 0) },
       { lab: "Litros", f: (s) => (s.vehiculos || []).reduce((a, v) => a + num(v.litros), 0) },
-      { lab: "Insumos", f: (s) => (s.insumos || []).filter((x) => val(x.insumo)).length },
       { lab: "Repuestos en espera", f: (s) => (s.repuestos || []).filter((r) => val(r.obra) || val(r.repuesto)).length },
       { lab: "Pendientes", f: (s) => (s.pendientes || []).filter((p) => val(p.obra) || val(p.pendiente)).length },
     ],
