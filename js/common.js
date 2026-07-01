@@ -59,6 +59,38 @@ function formatearFecha(v) {
   return s;
 }
 
+// Convierte una fecha (ISO, dd-mm-aaaa o aaaa-mm-dd) al valor "aaaa-mm-dd"
+// que necesita un <input type="date">. Devuelve "" si no la puede interpretar.
+function fechaISO(v) {
+  if (v == null || v === "") return "";
+  const s = String(v);
+  const p = (n) => String(n).padStart(2, "0");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d)) return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+  }
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${p(m[2])}-${p(m[1])}`;
+  return "";
+}
+
+// Valida que toda fila con datos en textCols tenga cargada la fecha (fechaCol).
+function faltaFechaEn(tbodyId, textCols, fechaCol) {
+  const tb = document.querySelector(`#${tbodyId} tbody`);
+  if (!tb) return false;
+  let falta = false;
+  tb.querySelectorAll("tr").forEach((tr) => {
+    const tieneTexto = textCols.some((c) => {
+      const i = tr.querySelector(`input[data-col="${c}"]`);
+      return i && i.value.trim();
+    });
+    const f = tr.querySelector(`input[data-col="${fechaCol}"]`);
+    if (tieneTexto && f && !f.value.trim()) falta = true;
+  });
+  return falta;
+}
+
 // Texto del desplegable de semana: "Semana 1 (10-05-2026 al 16-05-2026)".
 function textoSemana(s) {
   const d = formatearFecha(s[1]), h = formatearFecha(s[2]);
@@ -153,7 +185,8 @@ function construirFilasEtiqueta(tbodyId, rows, cols) {
 // onCount(n) se llama con la cantidad de filas con datos (para autocompletar).
 // max = tope de filas (lo que se guarda en la Sheet). Devuelve { agregar }.
 // listas (opcional) = { columna: idDeDatalist } para sugerencias en un input.
-function tablaDinamica(tbodyId, cols, onCount, max, listas) {
+// tipos (opcional) = { columna: "date" } para usar otro tipo de input (ej. calendario).
+function tablaDinamica(tbodyId, cols, onCount, max, listas, tipos) {
   const tb = document.querySelector(`#${tbodyId} tbody`);
 
   function renumerar() {
@@ -181,7 +214,8 @@ function tablaDinamica(tbodyId, cols, onCount, max, listas) {
     let html = `<td class="num"></td>`;
     cols.forEach((c) => {
       const lst = listas && listas[c] ? ` list="${listas[c]}"` : "";
-      html += `<td><input type="text" data-col="${c}"${lst} /></td>`;
+      const tp = (tipos && tipos[c]) ? tipos[c] : "text";
+      html += `<td><input type="${tp}" data-col="${c}"${lst} /></td>`;
     });
     html += `<td class="del"><button type="button" class="row-del" title="Quitar fila">×</button></td>`;
     tr.innerHTML = html;

@@ -28,8 +28,8 @@
 
     const cObras = tablaDinamica("tabla-obras", C_OBRAS, null, null, DL);
     const cVeh = tablaDinamica("tabla-vehiculos", C_VEH, null, null);
-    const cRep = tablaDinamica("tabla-repuestos", C_REP, null, null, DL);
-    const cPend = tablaDinamica("tabla-pendientes", C_PEND, null, null, DL);
+    const cRep = tablaDinamica("tabla-repuestos", C_REP, null, null, DL, { fecha: "date" });
+    const cPend = tablaDinamica("tabla-pendientes", C_PEND, null, null, DL, { fecha: "date" });
     wireAgregar("add-obras", cObras);
     wireAgregar("add-vehiculos", cVeh);
     wireAgregar("add-repuestos", cRep);
@@ -55,10 +55,11 @@
     $("supervisor").value = f.supervisor || ""; $("supervisor").dispatchEvent(new Event("change"));
     $("zona").value = f.zona || "";
     $("referente").value = f.referente || "";
+    const conFecha = (arr) => (arr || []).map((it) => Object.assign({}, it, { fecha: fechaISO(it.fecha) }));
     llenarDinamica("tabla-obras", c.cObras, ed.obras || [], C_OBRAS);
     llenarDinamica("tabla-vehiculos", c.cVeh, ed.vehiculos || [], C_VEH);
-    llenarDinamica("tabla-repuestos", c.cRep, ed.repuestos || [], C_REP);
-    llenarDinamica("tabla-pendientes", c.cPend, ed.pendientes || [], C_PEND);
+    llenarDinamica("tabla-repuestos", c.cRep, conFecha(ed.repuestos), C_REP);
+    llenarDinamica("tabla-pendientes", c.cPend, conFecha(ed.pendientes), C_PEND);
   }
 
   function cargarAnt(tbodyId, ctrl, cols, extractor) {
@@ -67,7 +68,7 @@
     traerCargaAnterior("Campo", sem, (s) => s.fila.supervisor === sup).then((res) => {
       if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
       if (!res.sub) { alert("No se encontró carga de " + sup + " en " + res.semanaAnt + "."); return; }
-      const items = extractor(res.sub);
+      const items = extractor(res.sub).map((it) => (it && it.fecha !== undefined ? Object.assign({}, it, { fecha: fechaISO(it.fecha) }) : it));
       if (!items.length) { alert("La semana anterior no tenía datos para cargar."); return; }
       llenarDinamica(tbodyId, ctrl, items, cols);
     });
@@ -96,6 +97,8 @@
   function validar(d) {
     if (!d.semana) return "Elegí la semana.";
     if (!d.supervisor) return "Elegí el supervisor.";
+    if (faltaFechaEn("tabla-repuestos", ["obra", "repuesto"], "fecha")) return "Completá la fecha de pedido en todos los repuestos en espera.";
+    if (faltaFechaEn("tabla-pendientes", ["obra", "pendiente"], "fecha")) return "Completá la fecha de pedido en todas las necesidades.";
     return null;
   }
 })();

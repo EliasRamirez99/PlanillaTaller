@@ -6,7 +6,7 @@
 
   const SECTOR = "Almacen";
   const COLS3 = ["total", "items", "repuestos"];
-  const C_INS = ["insumo", "cantidad"];
+  const C_INS = ["insumo", "cantidad", "unidad"];
   const C_VEH = ["dominio", "asignacion", "km", "litros"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Almacen");
@@ -49,7 +49,7 @@
     const insCtrl = tablaDinamica("tabla-insumos", C_INS, null, null);
     wireAgregar("add-insumos", insCtrl);
 
-    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33);
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33, null, { fecha: "date" });
     wireAgregar("add-necesidades", necCtrl);
     $("prev-necesidades").addEventListener("click", () => {
       const ub = $("ubicacion").value, sem = $("semana").value;
@@ -60,7 +60,7 @@
         const necs = [];
         for (let i = 1; i <= 33; i++) {
           const ne = res.sub.fila["nec" + i];
-          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: formatearFecha(res.sub.fila["necfecha" + i]) });
+          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: fechaISO(res.sub.fila["necfecha" + i]) });
         }
         if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
         llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
@@ -188,13 +188,13 @@
     recalcTransf();
 
     const necs = [];
-    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: formatearFecha(f["necfecha" + i]) }); }
+    for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: fechaISO(f["necfecha" + i]) }); }
     llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
 
     const ins = [];
     for (let i = 1; i <= 33; i++) {
-      const nm = f["ins" + i + "_insumo"], ca = f["ins" + i + "_cantidad"];
-      if (("" + (nm || "")).trim() || ("" + (ca || "")).trim()) ins.push({ insumo: nm, cantidad: ca });
+      const nm = f["ins" + i + "_insumo"], ca = f["ins" + i + "_cantidad"], un = f["insunidad" + i];
+      if (("" + (nm || "")).trim() || ("" + (ca || "")).trim() || ("" + (un || "")).trim()) ins.push({ insumo: nm, cantidad: ca, unidad: un });
     }
     llenarDinamica("tabla-insumos", insCtrl, ins, C_INS);
 
@@ -231,6 +231,7 @@
   function validar(d) {
     if (!d.semana) return "Elegí la semana.";
     if (!d.ubicacion) return "Elegí la ubicación.";
+    if (faltaFechaEn("tabla-necesidades", ["necesidad"], "fecha")) return "Completá la fecha de pedido en todas las necesidades.";
     return null;
   }
 })();

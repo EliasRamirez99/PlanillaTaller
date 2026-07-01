@@ -78,7 +78,7 @@
     } else {
       html += '<table class="grid resp"><thead><tr><th>Origen</th><th>Dominio / Obra</th><th>Repuesto en espera</th><th>Fecha pedido</th><th>Tiempo estimado</th></tr></thead><tbody>';
       r.forEach((x, i) => {
-        html += `<tr><td>${esc(x.origen)}</td><td>${esc(x.dominio)}</td><td>${esc(x.repuesto)}</td><td>${esc(x.fecha_pedido)}</td>` +
+        html += `<tr><td>${esc(x.origen)}</td><td>${esc(x.dominio)}</td><td>${esc(x.repuesto)}</td><td>${esc(formatearFecha(x.fecha_pedido))}</td>` +
           `<td><input type="text" data-rep="${i}" value="${esc(x.tiempo_estimado)}" /></td></tr>`;
       });
       html += "</tbody></table>";
@@ -223,7 +223,7 @@
   function abrirDetalleResp(x) {
     let h = `<h3>Respuestas — ${esc(x.semana)}</h3>`;
     const tr = tablaDet(["Dominio", "Repuesto", "Fecha pedido", "Tiempo estimado"],
-      (x.repuestos || []).map((r) => [r.dominio, r.repuesto, r.fecha_pedido, r.tiempo_estimado]));
+      (x.repuestos || []).map((r) => [r.dominio, r.repuesto, formatearFecha(r.fecha_pedido), r.tiempo_estimado]));
     if (tr) h += `<h4>Espera de Repuestos</h4>${tr}`;
     const tn = tablaDet(["Necesidad", "Fecha pedido", "Respuesta"],
       (x.necesidades || []).map((n) => [n.necesidad, formatearFecha(n.fecha_pedido), n.respuesta]));

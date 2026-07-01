@@ -23,8 +23,8 @@
     });
     $("ver-mecanicos").addEventListener("click", abrirGestionMecanicos);
 
-    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33);
-    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33);
+    const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33, null, { tiempo: "date" });
+    const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33, null, { fecha: "date" });
     wireAgregar("add-repuestos", repCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
@@ -158,13 +158,13 @@
     const r = [];
     for (let i = 1; i <= 33; i++) {
       const dom = f["rep" + i + "_dominio"], rep = f["rep" + i + "_repuesto"], tie = f["rep" + i + "_tiempo"];
-      if (("" + (dom || "")).trim() || ("" + (rep || "")).trim()) r.push({ dominio: dom, repuesto: rep, tiempo: tie });
+      if (("" + (dom || "")).trim() || ("" + (rep || "")).trim()) r.push({ dominio: dom, repuesto: rep, tiempo: fechaISO(tie) });
     }
     return r;
   }
   function leerNecsDeFila(f) {
     const r = [];
-    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: formatearFecha(f["necfecha" + i]) });
+    for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: fechaISO(f["necfecha" + i]) });
     return r;
   }
 
@@ -224,6 +224,8 @@
   function validar(d) {
     if (!d.semana) return "Elegí la semana.";
     if (!d.supervisor) return "Elegí el supervisor.";
+    if (faltaFechaEn("tabla-repuestos", ["dominio", "repuesto"], "tiempo")) return "Completá la fecha de pedido en todos los repuestos en espera.";
+    if (faltaFechaEn("tabla-necesidades", ["necesidad"], "fecha")) return "Completá la fecha de pedido en todas las necesidades.";
     return null;
   }
 })();

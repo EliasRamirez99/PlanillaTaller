@@ -161,6 +161,7 @@ function encabezadosAlmacen() {
   for (let i = 1; i <= MAX_LISTA; i++) INS.forEach((c) => h.push(`ins${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`necfecha${i}`);
   for (let i = 1; i <= MAX_LISTA; i++) VEH.forEach((c) => h.push(`veh${i}_${c}`));
+  for (let i = 1; i <= MAX_LISTA; i++) h.push(`insunidad${i}`);
   return h;
 }
 
@@ -190,6 +191,10 @@ function filaAlmacen(d, ts) {
   for (let i = 0; i < MAX_LISTA; i++) {
     const v = (d.vehiculos && d.vehiculos[i]) || {};
     VEH.forEach((c) => fila.push(v[c] || ""));
+  }
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const s = (d.insumos && d.insumos[i]) || {};
+    fila.push(s.unidad || "");
   }
   return fila;
 }
