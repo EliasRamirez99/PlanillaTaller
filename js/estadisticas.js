@@ -60,7 +60,8 @@
       if (sup) subs = subs.filter((s) => s.fila.supervisor === sup);
     } else if (AMBITO === "Almacen") {
       const u = $("est-ubic").value;
-      if (u) subs = subs.filter((s) => s.fila.ubicacion === u);
+      // La Sheet convierte ubicaciones numéricas (ej "758") a número → comparar como texto.
+      if (u) subs = subs.filter((s) => String(s.fila.ubicacion).trim() === u);
     }
     return subs;
   }
@@ -146,7 +147,8 @@
       (LISTADOS.talleres || []).map((t) => `<option>${esc(t)}</option>`).join("");
   }
   function pobUbic() {
-    const ubis = Array.from(new Set(hist().filter((s) => s.planilla === "Almacen" && s.fila).map((s) => s.fila.ubicacion).filter(Boolean))).sort();
+    const ubis = Array.from(new Set(hist().filter((s) => s.planilla === "Almacen" && s.fila)
+      .map((s) => String(s.fila.ubicacion).trim()).filter(Boolean))).sort();
     $("est-ubic").innerHTML = '<option value="">Todos</option>' + ubis.map((u) => `<option>${esc(u)}</option>`).join("");
   }
   function pobSup() {
