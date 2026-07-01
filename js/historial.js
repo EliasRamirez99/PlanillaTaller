@@ -114,7 +114,7 @@
       ["Base 7", f.transf_base7_total, f.transf_base7_items, f.transf_base7_repuestos],
     ];
     const tt = tabla(["Destino", "Total", "Items dif.", "Repuestos"], tr);
-    if (tt) h += `<h4>Transferencias de Base 4 a:</h4>${tt}`;
+    if (tt) h += `<h4>Transferencias a:</h4>${tt}`;
 
     const vehF = [];
     for (let i = 1; i <= 33; i++) vehF.push([f[`veh${i}_dominio`] || "", f[`veh${i}_asignacion`] || "", f[`veh${i}_km`] || "", f[`veh${i}_litros`] || ""]);
