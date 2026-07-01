@@ -6,6 +6,7 @@
 
   const SECTOR = "Almacen";
   const COLS3 = ["total", "items", "repuestos"];
+  const C_INS = ["insumo", "cantidad"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Almacen");
   let PANS = []; // pañoleros de la ubicación elegida (para "Ver listado")
@@ -29,8 +30,7 @@
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
     enlazarSemana("semana", "desde", "hasta");
     $("ubicacion").addEventListener("change", recalcPanoleros);
-    $("ver-panoleros").addEventListener("click", () =>
-      mostrarLista("Pañoleros — " + ($("ubicacion").value || "?"), PANS.map((p) => p[0] + (p[3] ? " (" + p[3] + ")" : ""))));
+    $("ver-panoleros").addEventListener("click", abrirGestionPanoleros);
 
     construirFilasEtiqueta("tabla-movimientos", MOV_ROWS, COLS3);
     // OR Cargadas: sólo aplica "Total"; deshabilitamos las otras dos columnas.
@@ -41,6 +41,9 @@
     });
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
     const recalcTransf = filaTotal("tabla-transferencias", COLS3, "Total");
+
+    const insCtrl = tablaDinamica("tabla-insumos", C_INS, null, null);
+    wireAgregar("add-insumos", insCtrl);
 
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad"], (n) => ($("necesidades_cant").value = n), 33);
     wireAgregar("add-necesidades", necCtrl);
@@ -57,7 +60,7 @@
       });
     });
 
-    if (enEd) prefill(edicion.fila, necCtrl, recalcTransf);
+    if (enEd) prefill(edicion.fila, necCtrl, insCtrl, recalcTransf);
 
     conectarForm(recolectar, validar, function () {
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
@@ -70,9 +73,87 @@
   });
 
   function recalcPanoleros() {
-    const u = $("ubicacion").value;
-    PANS = (LISTADOS.panoleros || []).filter((p) => p[1] === u);
+    const u = norm($("ubicacion").value);
+    PANS = (LISTADOS.panoleros || []).filter((p) => norm(p[1]) === u);
     $("cant_panoleros").value = PANS.length;
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function norm(v) { return String(v == null ? "" : v).trim(); }
+
+  // Gestor editable de pañoleros: arriba los que ya están en este depósito (para
+  // sacarlos); abajo, un buscador para sumar del resto. Solo se elige de los existentes.
+  function abrirGestionPanoleros() {
+    const U = $("ubicacion").value;
+    if (!U) { alert("Elegí primero la ubicación (depósito)."); return; }
+
+    const cache = listadosCache();
+    const pan = (cache && cache.datos && cache.datos.panoleros) ? cache.datos.panoleros : null;
+    if (!pan || !pan.length) { mostrarLista("Pañoleros — " + U, PANS.map((p) => p[0])); return; }
+
+    const enDeposito = (p) => norm(p.fila[1]) === norm(U);
+
+    const html =
+      `<h3>Pañoleros — ${esc(U)}</h3>` +
+      `<h4 class="mec-h4">En este depósito</h4>` +
+      `<div class="status" id="pan-status"></div>` +
+      `<table class="grid mec-tabla"><tbody id="pan-asig"></tbody></table>` +
+      `<h4 class="mec-h4">Agregar pañolero</h4>` +
+      `<p class="modal-nota">Buscá por nombre entre el resto de pañoleros y agregalo a este depósito.</p>` +
+      `<input type="text" id="pan-buscar" class="mec-buscar" placeholder="Buscar por nombre…" />` +
+      `<table class="grid mec-tabla"><tbody id="pan-resto"></tbody></table>`;
+    const body = modalHTML(html);
+    const setM = hacerStatus(body.querySelector("#pan-status"));
+    const tbAsig = body.querySelector("#pan-asig");
+    const tbResto = body.querySelector("#pan-resto");
+    const buscar = body.querySelector("#pan-buscar");
+
+    function pintarAsig() {
+      const filas = pan.filter(enDeposito);
+      tbAsig.innerHTML = filas.length ? filas.map((p) => {
+        const panol = norm(p.fila[3]);
+        return `<tr data-id="${esc(p.id)}"><td>${esc(p.fila[0] || "")}${panol ? `<div class="mec-cur">${esc(panol)}</div>` : ""}</td>` +
+          `<td class="mec-acc"><button type="button" class="ghost small" data-sacar="${esc(p.id)}">✕ Sacar</button></td></tr>`;
+      }).join("") : '<tr><td colspan="2"><em>Todavía no hay pañoleros en este depósito.</em></td></tr>';
+    }
+    function pintarResto(filtro) {
+      const f = norm(filtro).toLowerCase();
+      if (!f) { tbResto.innerHTML = '<tr><td><em>Escribí un nombre para buscar…</em></td></tr>'; return; }
+      const filas = pan.filter((p) => !enDeposito(p) && norm(p.fila[0]).toLowerCase().includes(f));
+      tbResto.innerHTML = filas.length ? filas.map((p) => {
+        const ubi = norm(p.fila[1]);
+        const cur = ubi ? esc(ubi) : "<em>sin depósito</em>";
+        return `<tr data-id="${esc(p.id)}"><td>${esc(p.fila[0] || "")}<div class="mec-cur">${cur}</div></td>` +
+          `<td class="mec-acc"><button type="button" class="ghost small" data-add="${esc(p.id)}">＋ Agregar</button></td></tr>`;
+      }).join("") : '<tr><td colspan="2"><em>Sin resultados.</em></td></tr>';
+    }
+    function aplicar(id, ubic, ctrl) {
+      if (ctrl) ctrl.disabled = true;
+      setM("Guardando…", "");
+      asignarPanoleroSrv(id, ubic).then(function () {
+        const p = pan.find((x) => String(x.id) === String(id));
+        const nombre = p ? p.fila[0] : "";
+        if (p) p.fila[1] = ubic;
+        (LISTADOS.panoleros || []).forEach((arr) => { if (arr[0] === nombre) arr[1] = ubic; });
+        try { localStorage.setItem("ops_listados", JSON.stringify(cache)); } catch (e) {}
+        recalcPanoleros();
+        setM("✅ Guardado.", "ok");
+        pintarAsig(); pintarResto(buscar.value);
+      }).catch(function () {
+        setM("❌ No se pudo guardar. Probá de nuevo.", "err");
+        if (ctrl) ctrl.disabled = false;
+      });
+    }
+    pintarAsig(); pintarResto("");
+    tbAsig.addEventListener("click", function (ev) { const b = ev.target.closest("button[data-sacar]"); if (!b) return; aplicar(b.getAttribute("data-sacar"), "", b); });
+    tbResto.addEventListener("click", function (ev) { const b = ev.target.closest("button[data-add]"); if (!b) return; aplicar(b.getAttribute("data-add"), U, b); });
+    buscar.addEventListener("input", function () { pintarResto(this.value); });
+  }
+
+  function asignarPanoleroSrv(id, ubicacion) {
+    if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve(); // demo
+    return postReintento({ accion: "asignar_panolero", sector: SECTOR, clave: claveSector(), id: id, ubicacion: ubicacion }, 3)
+      .then(function (o) { if (!o || !o.ok) throw new Error((o && o.error) || "error"); });
   }
 
   function setEtiqueta(tbodyId, clave, valsObj) {
@@ -83,7 +164,7 @@
     });
   }
 
-  function prefill(f, necCtrl, recalcTransf) {
+  function prefill(f, necCtrl, insCtrl, recalcTransf) {
     document.querySelector(".titulo").textContent = "EDITANDO CARGA — ALMACÉN";
     document.querySelector("button.primary").textContent = "Guardar cambios";
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
@@ -102,6 +183,13 @@
     const necs = [];
     for (let i = 1; i <= 33; i++) { const ne = f["nec" + i]; if (("" + (ne || "")).trim()) necs.push({ necesidad: ne }); }
     llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad"]);
+
+    const ins = [];
+    for (let i = 1; i <= 33; i++) {
+      const nm = f["ins" + i + "_insumo"], ca = f["ins" + i + "_cantidad"];
+      if (("" + (nm || "")).trim() || ("" + (ca || "")).trim()) ins.push({ insumo: nm, cantidad: ca });
+    }
+    llenarDinamica("tabla-insumos", insCtrl, ins, C_INS);
   }
 
   function recolectar() {
@@ -118,6 +206,7 @@
       transferencias: leerTablaEtiqueta("tabla-transferencias", COLS3),
       necesidades_cant: $("necesidades_cant").value,
       necesidades: leerTabla("tabla-necesidades", ["necesidad"]),
+      insumos: leerTabla("tabla-insumos", C_INS),
     };
     if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }
     return d;

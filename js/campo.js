@@ -10,7 +10,6 @@
 
   const C_OBRAS = ["obra", "ordenes", "tareas"];
   const C_VEH = ["dominio", "asignacion", "km", "litros"];
-  const C_INS = ["insumo", "cantidad"];
   const C_REP = ["obra", "repuesto", "fecha"];
   const C_PEND = ["obra", "pendiente"];
   const DL = { obra: "dl-obras" };
@@ -29,19 +28,17 @@
 
     const cObras = tablaDinamica("tabla-obras", C_OBRAS, null, null, DL);
     const cVeh = tablaDinamica("tabla-vehiculos", C_VEH, null, null);
-    const cIns = tablaDinamica("tabla-insumos", C_INS, null, null);
     const cRep = tablaDinamica("tabla-repuestos", C_REP, null, null, DL);
     const cPend = tablaDinamica("tabla-pendientes", C_PEND, null, null, DL);
     wireAgregar("add-obras", cObras);
     wireAgregar("add-vehiculos", cVeh);
-    wireAgregar("add-insumos", cIns);
     wireAgregar("add-repuestos", cRep);
     wireAgregar("add-pendientes", cPend);
 
     $("prev-repuestos").addEventListener("click", () => cargarAnt("tabla-repuestos", cRep, C_REP, (s) => s.repuestos || []));
     $("prev-pendientes").addEventListener("click", () => cargarAnt("tabla-pendientes", cPend, C_PEND, (s) => s.pendientes || []));
 
-    if (enEd) prefill(edicion, { cObras, cVeh, cIns, cRep, cPend });
+    if (enEd) prefill(edicion, { cObras, cVeh, cRep, cPend });
 
     conectarForm(recolectar, validar, function () {
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
@@ -60,7 +57,6 @@
     $("referente").value = f.referente || "";
     llenarDinamica("tabla-obras", c.cObras, ed.obras || [], C_OBRAS);
     llenarDinamica("tabla-vehiculos", c.cVeh, ed.vehiculos || [], C_VEH);
-    llenarDinamica("tabla-insumos", c.cIns, ed.insumos || [], C_INS);
     llenarDinamica("tabla-repuestos", c.cRep, ed.repuestos || [], C_REP);
     llenarDinamica("tabla-pendientes", c.cPend, ed.pendientes || [], C_PEND);
   }
@@ -90,7 +86,6 @@
       zona: $("zona").value,
       obras: leerTabla("tabla-obras", C_OBRAS),
       vehiculos: leerTabla("tabla-vehiculos", C_VEH),
-      insumos: leerTabla("tabla-insumos", C_INS),
       repuestos: leerTabla("tabla-repuestos", C_REP),
       pendientes: leerTabla("tabla-pendientes", C_PEND),
     };

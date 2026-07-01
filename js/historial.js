@@ -116,6 +116,11 @@
     const tt = tabla(["Destino", "Total", "Items dif.", "Repuestos"], tr);
     if (tt) h += `<h4>Transferencias de Base 4 a:</h4>${tt}`;
 
+    const insF = [];
+    for (let i = 1; i <= 33; i++) insF.push([f[`ins${i}_insumo`] || "", f[`ins${i}_cantidad`] || ""]);
+    const ins = tabla(["Insumo", "Cantidad"], insF);
+    if (ins) h += `<h4>Insumos utilizados</h4>${ins}`;
+
     const rep = repuestosDesdeFila(f, 33, "Repuesto / Obs.");
     if (rep) h += `<h4>Repuestos en espera</h4>${rep}`;
     const nec = necesidadesDesdeFila(f, 33);
@@ -132,8 +137,6 @@
     if (to) h += `<h4>Obras</h4>${to}`;
     const tv = tabla(["Dominio", "Asignación", "Km", "Litros"], (sub.vehiculos || []).map((v) => [v.dominio, v.asignacion, v.km, v.litros]));
     if (tv) h += `<h4>Vehículos utilizados</h4>${tv}`;
-    const ti = tabla(["Insumo", "Cantidad"], (sub.insumos || []).map((x) => [x.insumo, x.cantidad]));
-    if (ti) h += `<h4>Insumos utilizados</h4>${ti}`;
     const tr = tabla(["Obra", "Repuesto", "Fecha de pedido"], (sub.repuestos || []).map((r) => [r.obra, r.repuesto, r.fecha]));
     if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
     const tp = tabla(["Obra", "Necesidad"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente]));

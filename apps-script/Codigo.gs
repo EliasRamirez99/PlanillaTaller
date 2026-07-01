@@ -29,6 +29,7 @@ const CLAVES = {
 
 // Columnas reutilizadas.
 const REP = ["dominio", "repuesto", "tiempo"];            // repuestos en espera
+const INS = ["insumo", "cantidad"];                       // insumos utilizados (Almacén)
 const COLS3 = ["total", "items", "repuestos"];            // movimientos / transferencias
 const MOV_KEYS = ["or_cargadas", "remitos_egreso", "remitos_ingreso"];
 const TRANSF_KEYS = ["720", "745", "758", "760", "base7", "base4"];
@@ -79,6 +80,9 @@ function doPost(e) {
 
     // Asignar/reasignar/desasignar un mecánico (desde la planilla de Supervisores).
     if (d.accion === "asignar_mecanico") { asignarMecanico(d); return json({ ok: true }); }
+
+    // Sumar/sacar un pañolero de un depósito (desde la planilla de Almacén).
+    if (d.accion === "asignar_panolero") { asignarPanolero(d); return json({ ok: true }); }
 
     switch (d.planilla) {
       case "Supervisores":  guardarSupervisores(d); break;
@@ -148,6 +152,7 @@ function encabezadosAlmacen() {
   h.push("repuesto_en_espera", "necesidades_cant");
   for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
+  for (let i = 1; i <= MAX_LISTA; i++) INS.forEach((c) => h.push(`ins${i}_${c}`));
   return h;
 }
 
@@ -165,6 +170,10 @@ function filaAlmacen(d, ts) {
   for (let i = 0; i < MAX_LISTA; i++) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.necesidad || "");
+  }
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const s = (d.insumos && d.insumos[i]) || {};
+    INS.forEach((c) => fila.push(s[c] || ""));
   }
   return fila;
 }
@@ -388,6 +397,19 @@ function asignarMecanico(d) {
     }
   }
   throw new Error("mecanico no encontrado");
+}
+
+// Cambia la ubicación/depósito de un pañolero (col4 = v2 = ubicacion).
+function asignarPanolero(d) {
+  const sh = hojaListados();
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(d.id) && data[i][1] === "panoleros") {
+      sh.getRange(i + 1, 4, 1, 1).setValue(d.ubicacion || "");
+      return;
+    }
+  }
+  throw new Error("panolero no encontrado");
 }
 
 function borrarListado(d) {
