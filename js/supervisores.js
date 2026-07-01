@@ -81,11 +81,11 @@
       `<h3>Mecánicos — ${esc(U)} / ${esc(T)}</h3>` +
       `<h4 class="mec-h4">En tu taller</h4>` +
       `<div class="status" id="mec-status"></div>` +
-      `<div class="mec-scroll"><table class="grid mec-tabla"><tbody id="mec-asig"></tbody></table></div>` +
+      `<table class="grid mec-tabla"><tbody id="mec-asig"></tbody></table>` +
       `<h4 class="mec-h4">Agregar mecánico</h4>` +
       `<p class="modal-nota">Buscá por nombre entre el resto de mecánicos y agregalo a tu taller.</p>` +
       `<input type="text" id="mec-buscar" class="mec-buscar" placeholder="Buscar por nombre…" />` +
-      `<div class="mec-scroll"><table class="grid mec-tabla"><tbody id="mec-resto"></tbody></table></div>`;
+      `<table class="grid mec-tabla"><tbody id="mec-resto"></tbody></table>`;
     const body = modalHTML(html);
     const setM = hacerStatus(body.querySelector("#mec-status"));
     const tbAsig = body.querySelector("#mec-asig");
@@ -98,7 +98,7 @@
         const opts = talleres.map((t) => `<option value="${esc(t)}"${norm(t) === norm(T) ? " selected" : ""}>${esc(t)}</option>`).join("") +
           '<option value="">— Sacar de mi taller —</option>';
         return `<tr data-id="${esc(m.id)}"><td>${esc(m.fila[0] || "")}</td>` +
-          `<td class="mec-acc"><select data-mec="${esc(m.id)}" title="Cambiar designación o sacar">${opts}</select></td></tr>`;
+          `<td class="mec-sel"><select data-mec="${esc(m.id)}" title="Cambiar designación o sacar">${opts}</select></td></tr>`;
       }).join("") : '<tr><td colspan="2"><em>Todavía no hay mecánicos en tu taller.</em></td></tr>';
     }
 

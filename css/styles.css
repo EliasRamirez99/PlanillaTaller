@@ -178,13 +178,13 @@ tr .row-del {
 /* ---- Gestor editable de mecánicos (Supervisores) ---- */
 .modal-nota { font-size: 13px; color: #666; margin: 0 0 10px; }
 .mec-buscar { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
-.mec-scroll { max-height: 32vh; overflow: auto; }
-.mec-tabla { width: 100%; font-size: 14px; }
+.mec-tabla { width: 100%; font-size: 14px; table-layout: fixed; }
 .mec-tabla th, .mec-tabla td { padding: 5px 8px; vertical-align: middle; }
+.mec-tabla td.mec-sel { width: 46%; }
 .mec-tabla select { width: 100%; }
 .mec-tabla em { color: #999; }
 .mec-h4 { margin: 14px 0 4px; font-size: 14px; color: var(--verde-osc); }
-.mec-acc { text-align: right; white-space: nowrap; width: 1%; }
+.mec-acc { text-align: right; white-space: nowrap; width: 34%; }
 .mec-cur { font-size: 12px; color: #888; }
 .mec-add { white-space: nowrap; }
 
