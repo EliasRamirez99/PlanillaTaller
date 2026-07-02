@@ -51,21 +51,49 @@
 
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33, null, { fecha: "date" });
     wireAgregar("add-necesidades", necCtrl);
-    $("prev-necesidades").addEventListener("click", () => {
-      const ub = $("ubicacion").value, sem = $("semana").value;
+
+    // Trae la carga de la semana anterior de ESTE almacén y la pasa a onFila(fila).
+    function traerAnteriorAlmacen(onFila) {
+      const ub = norm($("ubicacion").value), sem = $("semana").value;
       if (!sem || !ub) { alert("Elegí primero la semana y la ubicación."); return; }
-      traerCargaAnterior("Almacen", sem, (s) => s.fila.ubicacion === ub).then((res) => {
+      traerCargaAnterior("Almacen", sem, (s) => norm(s.fila.ubicacion) === ub).then((res) => {
         if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
-        if (!res.sub) { alert("No se encontró carga de " + ub + " en " + res.semanaAnt + "."); return; }
-        const necs = [];
-        for (let i = 1; i <= 33; i++) {
-          const ne = res.sub.fila["nec" + i];
-          if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: fechaISO(res.sub.fila["necfecha" + i]) });
-        }
-        if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
-        llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
+        if (!res.sub) { alert("No se encontró carga de " + $("ubicacion").value + " en " + res.semanaAnt + "."); return; }
+        onFila(res.sub.fila);
       });
-    });
+    }
+
+    // Vehículos: sólo "Dominio" y "Asignación" (Km/Litros son de la semana actual).
+    $("prev-vehiculos").addEventListener("click", () => traerAnteriorAlmacen((f) => {
+      const vehs = [];
+      for (let i = 1; i <= 33; i++) {
+        const dom = f["veh" + i + "_dominio"];
+        if (("" + (dom || "")).trim()) vehs.push({ dominio: dom, asignacion: f["veh" + i + "_asignacion"] });
+      }
+      if (!vehs.length) { alert("La semana anterior no tenía vehículos."); return; }
+      llenarDinamica("tabla-vehiculos", vehCtrl, vehs, C_VEH);
+    }));
+
+    // Insumos: sólo la columna "Insumo" (Cantidad/Unidad son de la semana actual).
+    $("prev-insumos").addEventListener("click", () => traerAnteriorAlmacen((f) => {
+      const ins = [];
+      for (let i = 1; i <= 33; i++) {
+        const nm = f["ins" + i + "_insumo"];
+        if (("" + (nm || "")).trim()) ins.push({ insumo: nm });
+      }
+      if (!ins.length) { alert("La semana anterior no tenía insumos."); return; }
+      llenarDinamica("tabla-insumos", insCtrl, ins, C_INS);
+    }));
+
+    $("prev-necesidades").addEventListener("click", () => traerAnteriorAlmacen((f) => {
+      const necs = [];
+      for (let i = 1; i <= 33; i++) {
+        const ne = f["nec" + i];
+        if (("" + (ne || "")).trim()) necs.push({ necesidad: ne, fecha: fechaISO(f["necfecha" + i]) });
+      }
+      if (!necs.length) { alert("La semana anterior no tenía necesidades."); return; }
+      llenarDinamica("tabla-necesidades", necCtrl, necs, ["necesidad", "fecha"]);
+    }));
 
     if (enEd) prefill(edicion.fila, necCtrl, insCtrl, vehCtrl, recalcTransf);
 

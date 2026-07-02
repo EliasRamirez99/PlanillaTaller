@@ -35,6 +35,12 @@
     wireAgregar("add-repuestos", cRep);
     wireAgregar("add-pendientes", cPend);
 
+    // Obras: sólo se trae la columna "Obra" (las órdenes/tareas son de la semana actual).
+    $("prev-obras").addEventListener("click", () => cargarAnt("tabla-obras", cObras, C_OBRAS,
+      (s) => (s.obras || []).filter((o) => String(o.obra || "").trim()).map((o) => ({ obra: o.obra }))));
+    // Vehículos: sólo "Dominio" y "Asignación" (Km/Litros son de la semana actual).
+    $("prev-vehiculos").addEventListener("click", () => cargarAnt("tabla-vehiculos", cVeh, C_VEH,
+      (s) => (s.vehiculos || []).filter((v) => String(v.dominio || "").trim()).map((v) => ({ dominio: v.dominio, asignacion: v.asignacion }))));
     $("prev-repuestos").addEventListener("click", () => cargarAnt("tabla-repuestos", cRep, C_REP, (s) => s.repuestos || []));
     $("prev-pendientes").addEventListener("click", () => cargarAnt("tabla-pendientes", cPend, C_PEND, (s) => s.pendientes || []));
 
