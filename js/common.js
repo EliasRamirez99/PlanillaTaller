@@ -19,16 +19,31 @@ function fetchConTimeout(url, opts, ms) {
 }
 
 // POST al Apps Script con REINTENTOS (clave para internet inestable del trabajo).
+// Si hay relay configurado (CONFIG.RELAY_URL), cuando una ruta falla alterna a la
+// otra (directo ↔ relay) y recuerda en localStorage cuál funcionó, para arrancar
+// por ahí la próxima vez y no esperar el timeout los días que Google está bloqueado.
 // Devuelve el JSON de respuesta, o null si la red falló en todos los intentos.
+const RUTA_KEY = "ops_ruta_relay"; // "1" = la última vez respondió el relay
+
+function urlRelay() {
+  return (typeof CONFIG !== "undefined" && CONFIG.RELAY_URL) || "";
+}
+
 async function postReintento(body, intentos) {
   intentos = intentos || 3;
   const opts = { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) };
+  const relay = urlRelay();
+  let viaRelay = false;
+  try { viaRelay = !!relay && localStorage.getItem(RUTA_KEY) === "1"; } catch (e) {}
   for (let i = 0; i < intentos; i++) {
     try {
-      const resp = await fetchConTimeout(CONFIG.APPS_SCRIPT_URL, opts, 15000);
-      return await resp.json();
+      const resp = await fetchConTimeout(viaRelay ? relay : CONFIG.APPS_SCRIPT_URL, opts, 15000);
+      const out = await resp.json();
+      try { localStorage.setItem(RUTA_KEY, viaRelay ? "1" : "0"); } catch (e) {}
+      return out;
     } catch (e) {
-      if (i < intentos - 1) await new Promise((r) => setTimeout(r, 900 * (i + 1)));
+      if (relay) viaRelay = !viaRelay;
+      if (i < intentos - 1) await new Promise((r) => setTimeout(r, relay ? 300 : 900 * (i + 1)));
     }
   }
   return null;
