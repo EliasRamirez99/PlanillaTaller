@@ -19,7 +19,7 @@ const CONFIG = {
   // Camino alternativo cuando la red del trabajo bloquea script.google.com:
   // un relay en Vercel (api/proxy.js de este mismo repo) que reenvía a Google.
   // Vacío = sin relay (se comporta como siempre).
-  RELAY_URL: "",
+  RELAY_URL: "https://planilla-taller.vercel.app/api/proxy",
 
   // Las planillas de sector ya NO piden clave (carga sin fricción / sin internet).
   // El formulario manda esta clave automáticamente al guardar; debe coincidir con
