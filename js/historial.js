@@ -126,7 +126,12 @@
       ["758", f.transf_758_total, f.transf_758_items, f.transf_758_repuestos],
       ["760", f.transf_760_total, f.transf_760_items, f.transf_760_repuestos],
       ["Base 7", f.transf_base7_total, f.transf_base7_items, f.transf_base7_repuestos],
+      ["Base 4", f.transf_base4_total, f.transf_base4_items, f.transf_base4_repuestos],
     ];
+    // Destinos agregados desde la planilla (JSON en transf_extra).
+    let extras = [];
+    try { extras = JSON.parse(f.transf_extra || "[]") || []; } catch (e) {}
+    extras.forEach((x) => tr.push([x.destino, x.total, x.items, x.repuestos]));
     const tt = tabla(["Destino", "Total", "Items dif.", "Repuestos"], tr);
     if (tt) h += `<h4>Transferencias a:</h4>${tt}`;
 
@@ -266,13 +271,14 @@
     rellenar($("filtro-semana"), uniq(DATOS.map((s) => s.fila.semana)));
     rellenar($("filtro-familia"), uniq(DATOS.map((s) => s.planilla)));
   }
-  let LIMITE = 30;
+  const TAM_PAG = 25; // cargas por página
+  let PAGINA = 0;
   let FILTRADOS = [];
 
   function aplicarFiltro() {
     const s = $("filtro-semana").value;
     const fam = $("filtro-familia").value;
-    LIMITE = 30;
+    PAGINA = 0;
     pintarLista(DATOS.filter((sub) =>
       (!s || sub.fila.semana === s) && (!fam || sub.planilla === fam)));
   }
@@ -282,7 +288,9 @@
     if (!DATOS.length) { cont.innerHTML = ""; estado("Todavía no hay planillas cargadas.", ""); return; }
     if (!items.length) { cont.innerHTML = ""; estado("No hay cargas para ese filtro.", ""); return; }
     estado("", "");
-    const visibles = items.slice(0, LIMITE);
+    const paginas = Math.max(1, Math.ceil(items.length / TAM_PAG));
+    if (PAGINA > paginas - 1) PAGINA = paginas - 1;
+    const visibles = items.slice(PAGINA * TAM_PAG, PAGINA * TAM_PAG + TAM_PAG);
     const filas = visibles.map((sub, i) => {
       const f = sub.fila;
       return `<tr data-i="${i}">
@@ -297,8 +305,13 @@
     let html = `<table class="grid hist"><thead>
       <tr><th>Cargado</th><th>Planilla</th><th>Semana</th><th>Detalle</th><th></th><th></th></tr>
       </thead><tbody>${filas}</tbody></table>`;
-    if (items.length > LIMITE) {
-      html += `<div class="ver-mas"><button type="button" class="ghost small" id="hist-mas">Ver anteriores (${items.length - LIMITE} más)</button></div>`;
+    // Paginador (abajo): páginas de a 25, de las más nuevas a las más viejas.
+    if (paginas > 1) {
+      html += `<div class="pager">
+        <button type="button" class="ghost small" id="pag-ant"${PAGINA === 0 ? " disabled" : ""}>‹ Más recientes</button>
+        <span class="pager-info">Página ${PAGINA + 1} de ${paginas} · ${items.length} cargas</span>
+        <button type="button" class="ghost small" id="pag-sig"${PAGINA >= paginas - 1 ? " disabled" : ""}>Más antiguas ›</button>
+      </div>`;
     }
     cont.innerHTML = html;
     cont.querySelectorAll("tbody tr").forEach((tr) => {
@@ -309,8 +322,10 @@
         imprimirPDF(visibles[+tr.dataset.i]);
       });
     });
-    const mas = $("hist-mas");
-    if (mas) mas.addEventListener("click", () => { LIMITE += 30; pintarLista(FILTRADOS); });
+    const bAnt = $("pag-ant"), bSig = $("pag-sig");
+    const irA = (p) => { PAGINA = p; pintarLista(FILTRADOS); cont.scrollIntoView({ block: "start", behavior: "smooth" }); };
+    if (bAnt) bAnt.addEventListener("click", () => irA(PAGINA - 1));
+    if (bSig) bSig.addEventListener("click", () => irA(PAGINA + 1));
   }
 
   function render(datos) {

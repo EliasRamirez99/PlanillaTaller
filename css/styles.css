@@ -363,3 +363,72 @@ table.grid td.acc button[data-save]:hover { color: var(--ok); }
 table.grid td input[data-edit] {
   width: 100%; border: 1px solid var(--azul-borde); background: #fff; padding: 5px 6px; border-radius: 4px;
 }
+
+/* ---- Paginador del historial ---- */
+.pager { display: flex; gap: 12px; justify-content: center; align-items: center; margin: 14px 0 4px; flex-wrap: wrap; }
+.pager-info { font-size: 13px; color: #666; }
+.pager button[disabled] { opacity: .45; cursor: default; }
+
+/* ---- Botón de tema (en el encabezado) ---- */
+.btn-tema {
+  margin-left: auto; border: 1px solid var(--gris-borde); background: transparent;
+  border-radius: 50%; width: 38px; height: 38px; font-size: 17px; cursor: pointer; line-height: 1;
+}
+.btn-tema:hover { background: rgba(128, 128, 128, .15); }
+
+/* ============================================================
+   TEMA OSCURO — se activa con la clase "oscuro" en <html>
+   (toggle 🌙/☀ del encabezado; la preferencia queda guardada)
+   ============================================================ */
+html.oscuro {
+  --texto: #e5e8ec;
+  --gris-borde: #3c434b;
+  --azul-input: #232a33;
+  --azul-borde: #46617e;
+  --verde: #375426; /* fondos verdes (títulos, th) en versión profunda */
+  --svg-tx: #dfe3e8;
+  --svg-tx2: #9aa4af;
+  --svg-eje: #566068;
+  color-scheme: dark; /* calendarios, scrollbars y controles nativos en oscuro */
+}
+html.oscuro body { background: #14171a; color: var(--texto); }
+html.oscuro input, html.oscuro select, html.oscuro textarea { color: var(--texto); }
+html.oscuro .brand .sub { color: #9aa4af; }
+html.oscuro .brand .logo { color: #6ea8dc; border-color: #6ea8dc; }
+html.oscuro .titulo { color: #eaf3e0; }
+html.oscuro .card, html.oscuro .card-form, html.oscuro .gate,
+html.oscuro .kpi, html.oscuro .est-chart, html.oscuro .modal-box { background: #1d2126; }
+html.oscuro .card p, html.oscuro .gate p, html.oscuro .kpi-lab { color: #9aa4af; }
+html.oscuro .card .tag { background: #26303c; color: #b9c6d8; }
+html.oscuro .field input[readonly], html.oscuro input.mini,
+html.oscuro table.grid td input.auto { background: #262c33; color: #aeb6bf; }
+html.oscuro table.grid th { color: #e8f0dd; }
+html.oscuro table.grid td.num, html.oscuro table.grid td.label { background: #262b31; }
+html.oscuro table.grid tr.total-row td { background: #2c3d1e; }
+html.oscuro table.grid td.del, html.oscuro table.grid td.acc { background: #22262b; }
+html.oscuro table.grid.det td { background: #1d2126; }
+html.oscuro table.grid td select, html.oscuro table.grid td input[data-edit],
+html.oscuro table.grid.resp td input,
+html.oscuro table.grid.resp td.col-resp textarea { background: #232a33; color: var(--texto); }
+html.oscuro button.ghost { background: #232a33; color: var(--texto); }
+html.oscuro button.ghost:hover { background: #2b333d; }
+html.oscuro .seg-btn { background: #232a33; color: #aeb6bf; }
+html.oscuro .seg-btn:hover { background: #2b333d; }
+html.oscuro .seg-btn.active { background: var(--verde-osc); color: #fff; }
+html.oscuro .tab { color: #8b95a0; }
+html.oscuro .clave-box, html.oscuro .en-proceso { background: #2c2618; border-color: #5d4c22; color: #d8c289; }
+html.oscuro .back { color: #6ea8dc; }
+html.oscuro .obs-det { background: #22262b; border-color: #3c434b; }
+html.oscuro .status.ok { color: #6fc973; }
+html.oscuro .status.err { color: #e07b6d; }
+html.oscuro table.grid.hist tbody tr:hover { background: #223041; }
+html.oscuro table.grid.hist td.ver { color: #6ea8dc; }
+html.oscuro .kv { border-bottom-color: #333a42; }
+html.oscuro .kv span { color: #9aa4af; }
+html.oscuro .kpi-head, html.oscuro .auto-hint, html.oscuro .pager-info,
+html.oscuro .modal-nota { color: #9aa4af; }
+html.oscuro .mec-cur { color: #8b95a0; }
+html.oscuro .mec-tabla em { color: #7b848d; }
+html.oscuro .modal-close { color: #aeb6bf; }
+html.oscuro .kpi-delta.eq { color: #7b848d; }
+html.oscuro .field label small { color: #8b95a0; }

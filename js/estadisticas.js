@@ -12,6 +12,7 @@
   const val = (x) => x != null && String(x).trim() !== "";
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   function contarNec(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["nec" + i])) c++; return c; }
+  function transfExtra(f) { try { return JSON.parse(f.transf_extra || "[]") || []; } catch (e) { return []; } }
   function contarIns(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["ins" + i + "_insumo"])) c++; return c; }
   function contarRep(f) { let c = 0; for (let i = 1; i <= 33; i++) if (val(f["rep" + i + "_dominio"]) || val(f["rep" + i + "_repuesto"])) c++; return c; }
   function abrev(s) { const m = String(s).match(/(\d+)/); return m ? "S" + m[1] : s; }
@@ -22,7 +23,7 @@
       { lab: "OR Cargadas", f: (s) => num(s.fila.or_cargadas_total) },
       { lab: "Remitos Egreso", f: (s) => num(s.fila.remitos_egreso_total) },
       { lab: "Remitos Ingreso", f: (s) => num(s.fila.remitos_ingreso_total) },
-      { lab: "Transferencias", f: (s) => TRANSF.reduce((a, k) => a + num(s.fila["transf_" + k + "_total"]), 0) },
+      { lab: "Transferencias", f: (s) => TRANSF.reduce((a, k) => a + num(s.fila["transf_" + k + "_total"]), 0) + transfExtra(s.fila).reduce((a, x) => a + num(x.total), 0) },
       { lab: "Necesidades", f: (s) => contarNec(s.fila) },
       { lab: "Insumos", f: (s) => contarIns(s.fila) },
     ],
@@ -93,12 +94,12 @@
       const y = padT + chartH - bh;
       const last = i === n - 1;
       bars += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="4" fill="${last ? "var(--verde-osc)" : "var(--azul-borde)"}"></rect>`;
-      bars += `<text x="${x + bw / 2}" y="${y - 5}" text-anchor="middle" font-size="12" font-weight="700" fill="#333">${v}</text>`;
-      bars += `<text x="${x + bw / 2}" y="${padT + chartH + 17}" text-anchor="middle" font-size="11" fill="#666">${esc(abrev(sem))}</text>`;
+      bars += `<text x="${x + bw / 2}" y="${y - 5}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--svg-tx, #333)">${v}</text>`;
+      bars += `<text x="${x + bw / 2}" y="${padT + chartH + 17}" text-anchor="middle" font-size="11" fill="var(--svg-tx2, #666)">${esc(abrev(sem))}</text>`;
     });
     return `<div class="est-chart"><div class="est-chart-tit">${esc(titulo)}</div>` +
       `<svg class="est-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
-      `<line x1="${padL - 6}" y1="${padT + chartH}" x2="${w - padR}" y2="${padT + chartH}" stroke="#ccc"></line>${bars}</svg></div>`;
+      `<line x1="${padL - 6}" y1="${padT + chartH}" x2="${w - padR}" y2="${padT + chartH}" stroke="var(--svg-eje, #ccc)"></line>${bars}</svg></div>`;
   }
 
   // ---------- KPIs (última vs anterior) ----------

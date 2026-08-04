@@ -195,4 +195,8 @@ const LISTADOS = {
     "AGUILONES",
     "BALDES",
   ],
+
+  // Destinos de transferencia AGREGADOS desde la planilla de Almacén (los fijos
+  // viven en almacen.js). Se completa solo desde la Sheet (cfg_listados).
+  destinosTransfer: [],
 };

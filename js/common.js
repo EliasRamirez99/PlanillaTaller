@@ -155,13 +155,16 @@ async function validarClave(sector, clave) {
 }
 
 // Reemplaza en LISTADOS los tipos editables con la estructura {tipo:[{id,fila}]}.
-// Excepción: equiposEstacionarios es una lista de nombres y en la Sheet sólo viven
-// los AGREGADOS por los pañoleros → se MERGEAN con la lista base (no se reemplaza).
+// Excepción: los tipos "planos" (listas de nombres: equipos estacionarios y
+// destinos de transferencia) sólo guardan en la Sheet los AGREGADOS desde las
+// planillas → se MERGEAN con la lista base (no se reemplaza).
+const LISTADOS_PLANOS = { equiposEstacionarios: 1, destinosTransfer: 1 };
+
 function aplicarListados(estructura) {
   if (!estructura || typeof LISTADOS === "undefined") return;
   Object.keys(estructura).forEach((tipo) => {
     if (!Array.isArray(LISTADOS[tipo]) || !Array.isArray(estructura[tipo])) return;
-    if (tipo === "equiposEstacionarios") {
+    if (LISTADOS_PLANOS[tipo]) {
       const ya = LISTADOS[tipo].map((n) => String(n).trim().toLowerCase());
       estructura[tipo].forEach((e) => {
         const nombre = String((e && e.fila ? e.fila[0] : e) || "").trim();
@@ -475,3 +478,35 @@ function conectarForm(recolectar, validar, onOk) {
     enviarDatos(d, status, onOk);
   });
 }
+
+// ---------- Tema claro / oscuro ----------
+// La preferencia vive en localStorage y aplica a todas las páginas.
+const TEMA_KEY = "ops_tema";
+
+function aplicarTema() {
+  let t = "claro";
+  try { t = localStorage.getItem(TEMA_KEY) || "claro"; } catch (e) {}
+  document.documentElement.classList.toggle("oscuro", t === "oscuro");
+  const b = document.getElementById("btn-tema");
+  if (b) {
+    b.textContent = t === "oscuro" ? "☀" : "🌙";
+    b.title = t === "oscuro" ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
+  }
+}
+
+(function montarTema() {
+  aplicarTema(); // aplica la clase lo antes posible (common.js carga al final del body)
+  const brand = document.querySelector(".brand");
+  if (!brand || document.getElementById("btn-tema")) return;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.id = "btn-tema";
+  b.className = "btn-tema";
+  b.addEventListener("click", function () {
+    const t = document.documentElement.classList.contains("oscuro") ? "claro" : "oscuro";
+    try { localStorage.setItem(TEMA_KEY, t); } catch (e) {}
+    aplicarTema();
+  });
+  brand.appendChild(b);
+  aplicarTema(); // ahora con el botón creado, para setear su ícono
+})();

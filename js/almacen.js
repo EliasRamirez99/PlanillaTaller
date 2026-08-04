@@ -42,7 +42,20 @@
       if (inp) { inp.disabled = true; inp.value = ""; inp.placeholder = "—"; }
     });
     construirFilasEtiqueta("tabla-transferencias", TRANSF_ROWS, COLS3);
+    // Destinos agregados (compartidos vía cfg_listados): filas extra antes del Total.
+    (LISTADOS.destinosTransfer || []).forEach((n) => filaDestinoExtra(n));
     const recalcTransf = filaTotal("tabla-transferencias", COLS3, "Total");
+
+    // Agregar un destino que no está en la lista (queda guardado para todos).
+    $("add-destino").addEventListener("click", function () {
+      const n = $("nuevo-destino").value.trim();
+      if (!n) return;
+      if (buscarFilaDestino(n)) { alert("Ese destino ya está en la tabla."); $("nuevo-destino").value = ""; return; }
+      filaDestinoExtra(n);
+      registrarDestinoNuevo(n);
+      $("nuevo-destino").value = "";
+      recalcTransf();
+    });
 
     const vehCtrl = tablaDinamica("tabla-vehiculos", C_VEH, null, null);
     wireAgregar("add-vehiculos", vehCtrl);
@@ -113,6 +126,45 @@
     const u = norm($("ubicacion").value);
     PANS = (LISTADOS.panoleros || []).filter((p) => norm(p[1]) === u);
     $("cant_panoleros").value = PANS.length;
+  }
+
+  // ---- Destinos de transferencia agregados (filas extra de la tabla) ----
+  // Cada fila extra lleva data-clave "x|<nombre>" para separarla de las fijas.
+  function filaDestinoExtra(nombre) {
+    const tb = document.querySelector("#tabla-transferencias tbody");
+    const tr = document.createElement("tr");
+    tr.dataset.clave = "x|" + nombre;
+    let html = `<td class="label">${esc(nombre)}</td>`;
+    COLS3.forEach((c) => { html += `<td><input type="text" data-col="${c}" /></td>`; });
+    tr.innerHTML = html;
+    const total = tb.querySelector("tr.total-row");
+    if (total) tb.insertBefore(tr, total); else tb.appendChild(tr);
+    return tr;
+  }
+
+  function buscarFilaDestino(nombre) {
+    const k = norm(nombre).toLowerCase();
+    return Array.from(document.querySelectorAll("#tabla-transferencias tbody tr[data-clave]")).find((tr) => {
+      const c = tr.dataset.clave;
+      const lab = c.indexOf("x|") === 0 ? c.slice(2) : ((TRANSF_ROWS.find((r) => r[0] === c) || [])[1] || c);
+      return norm(lab).toLowerCase() === k;
+    });
+  }
+
+  function registrarDestinoNuevo(nombre) {
+    const lista = (LISTADOS.destinosTransfer = LISTADOS.destinosTransfer || []);
+    if (lista.some((e) => norm(e).toLowerCase() === norm(nombre).toLowerCase())) return;
+    lista.push(nombre);
+    if (!CONFIG.APPS_SCRIPT_URL) return;
+    postReintento({ accion: "agregar_listado", sector: SECTOR, clave: claveSector(), tipo: "destinosTransfer", fila: [nombre] }, 3)
+      .then((o) => {
+        if (!o || !o.ok || !o.id) return;
+        const cache = listadosCache();
+        if (cache && cache.datos) {
+          (cache.datos.destinosTransfer = cache.datos.destinosTransfer || []).push({ id: o.id, fila: [nombre] });
+          try { localStorage.setItem("ops_listados", JSON.stringify(cache)); } catch (e) {}
+        }
+      });
   }
 
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -216,6 +268,13 @@
     TRANSF_ROWS.forEach(([clave]) => {
       setEtiqueta("tabla-transferencias", clave, { total: f["transf_" + clave + "_total"], items: f["transf_" + clave + "_items"], repuestos: f["transf_" + clave + "_repuestos"] });
     });
+    // Destinos agregados de esa carga (vienen como JSON en transf_extra).
+    let extras = [];
+    try { extras = JSON.parse(f.transf_extra || "[]") || []; } catch (e) {}
+    extras.forEach((x) => {
+      const tr = buscarFilaDestino(x.destino) || filaDestinoExtra(x.destino);
+      COLS3.forEach((c) => { const inp = tr.querySelector(`input[data-col="${c}"]`); if (inp) inp.value = x[c] || ""; });
+    });
     recalcTransf();
 
     const necs = [];
@@ -239,6 +298,21 @@
   }
 
   function recolectar() {
+    // Separar las filas fijas (claves de siempre) de los destinos agregados ("x|…").
+    const brutoTransf = leerTablaEtiqueta("tabla-transferencias", COLS3);
+    const transferencias = {};
+    const transf_extra = [];
+    Object.keys(brutoTransf).forEach((k) => {
+      if (k.indexOf("x|") === 0) {
+        const o = brutoTransf[k];
+        if (o.total || o.items || o.repuestos) {
+          transf_extra.push({ destino: k.slice(2), total: o.total, items: o.items, repuestos: o.repuestos });
+        }
+      } else {
+        transferencias[k] = brutoTransf[k];
+      }
+    });
+
     const d = {
       sector: SECTOR,
       planilla: "Almacen",
@@ -249,7 +323,8 @@
       ubicacion: $("ubicacion").value,
       cant_panoleros: $("cant_panoleros").value,
       movimientos: leerTablaEtiqueta("tabla-movimientos", COLS3),
-      transferencias: leerTablaEtiqueta("tabla-transferencias", COLS3),
+      transferencias: transferencias,
+      transf_extra: transf_extra,
       necesidades_cant: $("necesidades_cant").value,
       observaciones: $("observaciones").value.trim(),
       necesidades: leerTabla("tabla-necesidades", ["necesidad", "fecha"]),

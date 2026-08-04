@@ -25,11 +25,16 @@
       { etq: "Ubicación", opts: () => UBIS }, { etq: "Obra" } ] },
     { tipo: "semanas", titulo: "Listado de Semanas", cols: [
       { etq: "Semana" }, { etq: "Desde", fecha: true }, { etq: "Hasta", fecha: true } ] },
-    // Sólo los equipos AGREGADOS desde la planilla de Estacionarios (la lista base
-    // vive en js/listados.js y no se puede borrar desde acá).
+    // Sólo los AGREGADOS desde las planillas (las listas base viven en el código
+    // y no se pueden borrar desde acá).
     { tipo: "equiposEstacionarios", titulo: "Equipos Estacionarios (agregados)", cols: [
       { etq: "Equipo" } ] },
+    { tipo: "destinosTransfer", titulo: "Destinos de transferencia (agregados)", cols: [
+      { etq: "Destino" } ] },
   ];
+
+  // Tipos que NO se siembran (en la Sheet sólo viven los agregados).
+  const SIN_SEED = { equiposEstacionarios: 1, destinosTransfer: 1 };
 
   const cont = $("ajustes");
   let ESTADO = {}; // { tipo: [{ id, fila:[...] }] }
@@ -101,9 +106,7 @@
       let r = await post({ accion: "listados" });
       if (r && r.ok && !r.seeded) {
         const base = {};
-        // equiposEstacionarios NO se siembra: la lista base vive en js/listados.js
-        // y en la Sheet sólo se guardan los agregados.
-        TIPOS.forEach((t) => { if (t.tipo !== "equiposEstacionarios") base[t.tipo] = LISTADOS[t.tipo] || []; });
+        TIPOS.forEach((t) => { if (!SIN_SEED[t.tipo]) base[t.tipo] = LISTADOS[t.tipo] || []; });
         await post({ accion: "seed_listados", sector: "Admin", clave: sesion.clave, datos: base });
         r = await post({ accion: "listados" });
       }

@@ -39,6 +39,8 @@ const EQ_COLS = ["operativa", "no_operativa", "total"];
 
 // Tope de filas guardadas para Repuestos en espera y Necesidades (Supervisores y Almacén).
 const MAX_LISTA = 33;
+// Tope de equipos por carga de Estacionarios (catálogo + agregados).
+const MAX_EQ = 40;
 
 // Cantidad de columnas de cada listado editable desde Ajustes.
 const LISTADO_COLS = {
@@ -48,12 +50,14 @@ const LISTADO_COLS = {
   obras: 2,        // ubicacion, obra
   semanas: 3,      // semana, desde, hasta
   equiposEstacionarios: 1, // nombre (sólo los agregados desde la planilla)
+  destinosTransfer: 1,     // destino de transferencia agregado desde Almacén
 };
 
 // Tipos de listado que las planillas pueden AGREGAR con su clave de sector
-// (mecánico nuevo desde Supervisores, equipo nuevo desde Estacionarios).
+// (mecánico nuevo desde Supervisores, equipo nuevo desde Estacionarios,
+// destino de transferencia desde Almacén).
 // Editar y borrar siguen siendo sólo con clave Admin.
-const TIPOS_ALTA_SECTOR = ["mecanicos", "equiposEstacionarios"];
+const TIPOS_ALTA_SECTOR = ["mecanicos", "equiposEstacionarios", "destinosTransfer"];
 
 function doPost(e) {
   try {
@@ -67,7 +71,7 @@ function doPost(e) {
     if (d.accion === "historial_respuestas") return json({ ok: true, datos: historialRespuestas() });
 
     // --- acciones que requieren clave (sector, o Admin para Ajustes) ---
-    const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados"];
+    const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados", "borrar_carga"];
     let sectorClave = (accionesAdmin.indexOf(d.accion) >= 0) ? "Admin" : d.sector;
     // Excepción: las planillas pueden dar de alta ciertos listados con su clave de sector.
     if (d.accion === "agregar_listado" && d.sector && d.sector !== "Admin" &&
@@ -90,6 +94,9 @@ function doPost(e) {
 
     // Editar una carga ya existente (desde el historial).
     if (d.accion === "editar_carga") { editarCarga(d); return json({ ok: true }); }
+
+    // Borrar una carga completa por timestamp (sólo Admin; para correcciones).
+    if (d.accion === "borrar_carga") { borrarCarga(d); return json({ ok: true }); }
 
     // Asignar/reasignar/desasignar un mecánico (desde la planilla de Supervisores).
     if (d.accion === "asignar_mecanico") { asignarMecanico(d); return json({ ok: true }); }
@@ -154,20 +161,81 @@ function guardarSupervisores(d) {
   hoja("Supervisores", encabezadosSupervisores()).appendRow(filaSupervisores(d, new Date()));
 }
 
-/* ---------- Estacionarios (1 fila por equipo cargado) ---------- */
+/* ---------- Estacionarios (1 fila por CARGA, como el resto) ----------
+   Esquema: datos generales + eq1..eq40 (equipo/operativa/no_operativa/total).
+   El formato viejo (1 fila por equipo) se migra solo la primera vez que se
+   guarda/lee/edita: las filas viejas quedan respaldadas en la pestaña
+   "Estacionarios_viejo" (no se borra ningún dato) y la principal se rearma
+   agrupada por carga. ------------------------------------------------- */
 function encabezadosEstacionarios() {
-  return ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros",
-    "equipo", "operativa", "no_operativa", "total", "observaciones"];
+  const h = ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros", "observaciones"];
+  for (let i = 1; i <= MAX_EQ; i++) {
+    h.push(`eq${i}_equipo`);
+    EQ_COLS.forEach((c) => h.push(`eq${i}_${c}`));
+  }
+  return h;
 }
 
-function filasEstacionarios(d, ts) {
-  return (d.equipos || []).map((e) => [ts, d.semana, d.desde, d.hasta, d.ubicacion,
-    d.cant_panoleros, e.equipo, e.operativa, e.no_operativa, e.total, d.observaciones || ""]);
+function filaEstacionarios(d, ts) {
+  const fila = [ts, d.semana, d.desde, d.hasta, d.ubicacion, d.cant_panoleros, d.observaciones || ""];
+  for (let i = 0; i < MAX_EQ; i++) {
+    const e = (d.equipos && d.equipos[i]) || {};
+    fila.push(e.equipo || "");
+    EQ_COLS.forEach((c) => fila.push(e[c] || ""));
+  }
+  return fila;
+}
+
+// Si la pestaña sigue en el formato viejo (columna 7 = "equipo"), la respalda
+// y la reescribe agrupada. Idempotente y barata cuando ya está migrada.
+function migrarEstacionarios() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName("Estacionarios");
+  if (!sh || sh.getLastRow() < 1 || sh.getLastColumn() < 7) return;
+  const head7 = sh.getRange(1, 7).getValue();
+  if (head7 !== "equipo") return; // formato nuevo (o pestaña recién creada)
+
+  const data = sh.getDataRange().getValues();
+  const h = data[0];
+  const idx = {};
+  h.forEach((n, i) => { idx[n] = i; });
+
+  const grupos = {};
+  const orden = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    const k = String(r[idx.timestamp]);
+    if (!grupos[k]) {
+      grupos[k] = {
+        ts: r[idx.timestamp],
+        d: {
+          semana: r[idx.semana], desde: r[idx.desde], hasta: r[idx.hasta],
+          ubicacion: r[idx.ubicacion], cant_panoleros: r[idx.cant_panoleros],
+          observaciones: idx.observaciones != null ? r[idx.observaciones] : "",
+          equipos: [],
+        },
+      };
+      orden.push(k);
+    }
+    grupos[k].d.equipos.push({
+      equipo: r[idx.equipo], operativa: r[idx.operativa],
+      no_operativa: r[idx.no_operativa], total: r[idx.total],
+    });
+  }
+
+  // Respaldo del formato viejo (no se borra nada).
+  let nombreViejo = "Estacionarios_viejo";
+  if (ss.getSheetByName(nombreViejo)) nombreViejo += "_" + new Date().getTime();
+  sh.setName(nombreViejo);
+  sh.hideSheet();
+
+  const nuevo = hoja("Estacionarios", encabezadosEstacionarios());
+  orden.forEach((k) => nuevo.appendRow(filaEstacionarios(grupos[k].d, grupos[k].ts)));
 }
 
 function guardarEstacionarios(d) {
-  const sh = hoja("Estacionarios", encabezadosEstacionarios());
-  filasEstacionarios(d, new Date()).forEach((f) => sh.appendRow(f));
+  migrarEstacionarios();
+  hoja("Estacionarios", encabezadosEstacionarios()).appendRow(filaEstacionarios(d, new Date()));
 }
 
 /* ---------------- Almacén (1 fila por carga) ---------------- */
@@ -183,6 +251,7 @@ function encabezadosAlmacen() {
   for (let i = 1; i <= MAX_LISTA; i++) VEH.forEach((c) => h.push(`veh${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`insunidad${i}`);
   h.push("observaciones"); // columnas nuevas siempre al final
+  h.push("transf_extra");  // transferencias a destinos agregados (JSON)
   return h;
 }
 
@@ -218,6 +287,7 @@ function filaAlmacen(d, ts) {
     fila.push(s.unidad || "");
   }
   fila.push(d.observaciones || ""); // columnas nuevas siempre al final
+  fila.push(JSON.stringify(d.transf_extra || []));
   return fila;
 }
 
@@ -252,14 +322,24 @@ function editarCarga(d) {
   } else if (d.planilla === "Almacen") {
     actualizarFila(hoja("Almacen", encabezadosAlmacen()), ts, filaAlmacen(d, ts));
   } else if (d.planilla === "Estacionarios") {
-    const sh = hoja("Estacionarios", encabezadosEstacionarios());
-    borrarFilasTimestamp(sh, ts);
-    filasEstacionarios(d, ts).forEach((f) => sh.appendRow(f));
+    migrarEstacionarios();
+    actualizarFila(hoja("Estacionarios", encabezadosEstacionarios()), ts, filaEstacionarios(d, ts));
   } else if (d.planilla === "Campo") {
     actualizarFila(hoja("Campo", encabezadosCampo()), ts, filaCampo(d, ts));
   } else {
     throw new Error("planilla desconocida: " + d.planilla);
   }
+}
+
+// Borra por completo una carga (todas sus filas con ese timestamp).
+function borrarCarga(d) {
+  const encabezados = {
+    Supervisores: encabezadosSupervisores, Estacionarios: encabezadosEstacionarios,
+    Almacen: encabezadosAlmacen, Campo: encabezadosCampo,
+  };
+  if (!encabezados[d.planilla]) throw new Error("planilla desconocida: " + d.planilla);
+  if (d.planilla === "Estacionarios") migrarEstacionarios();
+  borrarFilasTimestamp(hoja(d.planilla, encabezados[d.planilla]()), new Date(d.id));
 }
 
 function actualizarFila(sh, tsDate, nuevaFila) {
@@ -300,31 +380,33 @@ function leerHistorial() {
     }
   });
 
-  // Estacionarios: varias filas (1 por equipo) = 1 carga -> agrupar por timestamp.
+  // Estacionarios: 1 fila por carga (formato nuevo; migra el viejo si hace falta).
+  migrarEstacionarios();
   const she = ss.getSheetByName("Estacionarios");
   if (she && she.getLastRow() >= 2) {
     const data = she.getDataRange().getValues();
     const head = data[0];
-    const grupos = {};
     for (let i = 1; i < data.length; i++) {
       const o = filaObj(head, data[i]);
-      const k = String(o.timestamp);
-      if (!grupos[k]) {
-        grupos[k] = {
-          planilla: "Estacionarios",
-          fila: {
-            timestamp: o.timestamp, semana: o.semana, desde: o.desde,
-            hasta: o.hasta, ubicacion: o.ubicacion, cant_panoleros: o.cant_panoleros,
-            observaciones: o.observaciones,
-          },
-          equipos: [],
-        };
+      const equipos = [];
+      for (let j = 1; j <= MAX_EQ; j++) {
+        const eq = o[`eq${j}_equipo`];
+        if (eq == null || String(eq).trim() === "") continue;
+        equipos.push({
+          equipo: eq, operativa: o[`eq${j}_operativa`],
+          no_operativa: o[`eq${j}_no_operativa`], total: o[`eq${j}_total`],
+        });
       }
-      grupos[k].equipos.push({
-        equipo: o.equipo, operativa: o.operativa, no_operativa: o.no_operativa, total: o.total,
+      out.push({
+        planilla: "Estacionarios",
+        fila: {
+          timestamp: o.timestamp, semana: o.semana, desde: o.desde,
+          hasta: o.hasta, ubicacion: o.ubicacion, cant_panoleros: o.cant_panoleros,
+          observaciones: o.observaciones,
+        },
+        equipos: equipos,
       });
     }
-    Object.keys(grupos).forEach((k) => out.push(grupos[k]));
   }
 
   // Campo: 1 fila = 1 carga; las listas vienen como JSON.
@@ -377,7 +459,7 @@ function estaSeedeado() {
 // Devuelve todos los listados agrupados, cada entrada con su id (para editar/borrar).
 function leerListados() {
   const sh = hojaListados();
-  const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [], equiposEstacionarios: [] };
+  const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [], equiposEstacionarios: [], destinosTransfer: [] };
   if (sh.getLastRow() < 2) return out;
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
