@@ -207,9 +207,8 @@
   }
 
   // ---------- PDF para imprimir ----------
-  function armarHTMLImpresion(sub) {
-    const f = sub.fila;
-    const titulo = `${nombrePlanilla(sub.planilla)} — ${f.semana || ""}`;
+  // Shell de la vista de impresión (lo comparte el Resumen semanal completo).
+  function shellImpresion(titulo, cuerpo) {
     const estilos = `
       * { box-sizing: border-box; }
       body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #222; margin: 24px; }
@@ -218,6 +217,9 @@
       .enc .emp { font-size: 13px; color: #555; }
       h2 { font-size: 16px; margin: 6px 0 10px; text-transform: uppercase; }
       h4 { font-size: 13px; margin: 14px 0 4px; color: #46652a; border-bottom: 1px solid #cfe0b8; padding-bottom: 2px; }
+      .res-tit { font-size: 14px; margin: 0 0 8px; color: #46652a; border-bottom: 2px solid #a9d08e; padding-bottom: 4px; }
+      .res-carga { margin-bottom: 18px; }
+      .res-carga + .res-carga { page-break-before: always; }
       .kvs { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 6px 0; }
       .kv span { color: #666; }
       .kv b { margin-left: 4px; }
@@ -233,10 +235,14 @@
       `<style>${estilos}</style></head><body>` +
       `<div class="enc"><span class="logo">OPS</span><span class="emp">Oilfield Production Services</span></div>` +
       `<h2>${esc(titulo)}</h2>` +
-      cuerpoDetalle(sub) +
+      cuerpo +
       `<div class="pie">Generado desde Planillas OPS — ${esc(fmtFecha(new Date().toISOString()))}</div>` +
       `<script>window.onload = function () { window.print(); };<\/script>` +
       `</body></html>`;
+  }
+
+  function armarHTMLImpresion(sub) {
+    return shellImpresion(`${nombrePlanilla(sub.planilla)} — ${sub.fila.semana || ""}`, cuerpoDetalle(sub));
   }
 
   function imprimirPDF(sub) {
@@ -369,4 +375,12 @@
   $("filtro-familia").addEventListener("change", aplicarFiltro);
 
   cargar();
+
+  // Renderers compartidos con la pestaña "Resumen semanal completo" (resumen.js).
+  window.OPS_DETALLE = {
+    cuerpo: cuerpoDetalle,
+    nombre: nombrePlanilla,
+    quien: quien,
+    shell: shellImpresion,
+  };
 })();

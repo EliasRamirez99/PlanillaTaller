@@ -546,76 +546,130 @@ function borrarListado(d) {
   throw new Error("id no encontrado");
 }
 
-/* ---------------- Respuestas de jefatura (por semana) ----------------
-   Tab "Respuestas" = [semana, tipo, dominio, repuesto, fecha_pedido,
-   tiempo_estimado, necesidad, respuesta, timestamp]. Se reemplaza por semana.
-   --------------------------------------------------------------------- */
-function hojaRespuestas() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName("Respuestas");
-  if (!sh) {
-    sh = ss.insertSheet("Respuestas");
-    sh.appendRow(["semana", "tipo", "dominio", "repuesto", "fecha_pedido",
-      "tiempo_estimado", "necesidad", "respuesta", "timestamp"]);
-    sh.setFrozenRows(1);
-  }
-  return sh;
+/* ---------------- Respuestas de jefatura (1 fila por SEMANA) ----------------
+   Esquema: [timestamp, semana] + resp1..resp40 (dominio/repuesto/fecha_pedido/
+   tiempo_estimado) + nec1..nec40 (necesidad/fecha_pedido/respuesta).
+   El formato viejo (1 fila por ítem) se migra solo la primera vez: las filas
+   originales quedan respaldadas en "Respuestas_viejo" (oculta) y la pestaña
+   principal se rearma con una fila por semana. Guardar reemplaza la fila de
+   esa semana (o la agrega si no existía). ----------------------------------- */
+const MAX_RESP = 60;
+const RESP_COLS = ["dominio", "repuesto", "fecha_pedido", "tiempo_estimado"];
+const NECR_COLS = ["necesidad", "fecha_pedido", "respuesta"];
+
+function encabezadosRespuestas() {
+  const h = ["timestamp", "semana"];
+  for (let i = 1; i <= MAX_RESP; i++) RESP_COLS.forEach((c) => h.push(`resp${i}_${c}`));
+  for (let i = 1; i <= MAX_RESP; i++) NECR_COLS.forEach((c) => h.push(`nec${i}_${c}`));
+  return h;
 }
 
-function leerRespuestas(semana) {
-  const sh = hojaRespuestas();
-  const out = { repuestos: [], necesidades: [] };
-  if (sh.getLastRow() < 2) return out;
+function filaRespuestas(d, ts) {
+  const fila = [ts, d.semana];
+  for (let i = 0; i < MAX_RESP; i++) {
+    const r = (d.repuestos && d.repuestos[i]) || {};
+    RESP_COLS.forEach((c) => fila.push(r[c] || ""));
+  }
+  for (let i = 0; i < MAX_RESP; i++) {
+    const n = (d.necesidades && d.necesidades[i]) || {};
+    NECR_COLS.forEach((c) => fila.push(n[c] || ""));
+  }
+  return fila;
+}
+
+// Si la pestaña sigue en el formato viejo (columna 2 = "tipo"), la respalda
+// y la rearma con 1 fila por semana. Idempotente.
+function migrarRespuestas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName("Respuestas");
+  if (!sh || sh.getLastRow() < 1 || sh.getLastColumn() < 2) return;
+  if (sh.getRange(1, 2).getValue() !== "tipo") return; // formato nuevo
+
   const data = sh.getDataRange().getValues();
+  const map = {};
+  const orden = [];
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]) !== String(semana)) continue;
-    if (data[i][1] === "repuesto") {
-      out.repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
-    } else if (data[i][1] === "necesidad") {
-      out.necesidades.push({ necesidad: data[i][6], respuesta: data[i][7], fecha_pedido: data[i][4] });
+    const r = data[i];
+    const sem = String(r[0]);
+    if (!map[sem]) {
+      map[sem] = { semana: r[0], ts: r[8], repuestos: [], necesidades: [] };
+      orden.push(sem);
     }
+    if (r[8] && new Date(r[8]) > new Date(map[sem].ts)) map[sem].ts = r[8];
+    if (r[1] === "repuesto") {
+      map[sem].repuestos.push({ dominio: r[2], repuesto: r[3], fecha_pedido: r[4], tiempo_estimado: r[5] });
+    } else if (r[1] === "necesidad") {
+      map[sem].necesidades.push({ necesidad: r[6], fecha_pedido: r[4], respuesta: r[7] });
+    }
+  }
+
+  let nombreViejo = "Respuestas_viejo";
+  if (ss.getSheetByName(nombreViejo)) nombreViejo += "_" + new Date().getTime();
+  sh.setName(nombreViejo);
+  sh.hideSheet();
+
+  const nuevo = hoja("Respuestas", encabezadosRespuestas());
+  orden.forEach((sem) => {
+    const m = map[sem];
+    nuevo.appendRow(filaRespuestas({ semana: m.semana, repuestos: m.repuestos, necesidades: m.necesidades }, m.ts || new Date()));
+  });
+}
+
+// Reconstruye {repuestos, necesidades} desde una fila del formato nuevo.
+function respuestasDeFila(o) {
+  const out = { repuestos: [], necesidades: [] };
+  for (let i = 1; i <= MAX_RESP; i++) {
+    const dom = o[`resp${i}_dominio`], rep = o[`resp${i}_repuesto`];
+    if (String(dom == null ? "" : dom).trim() === "" && String(rep == null ? "" : rep).trim() === "") continue;
+    out.repuestos.push({ dominio: dom, repuesto: rep, fecha_pedido: o[`resp${i}_fecha_pedido`], tiempo_estimado: o[`resp${i}_tiempo_estimado`] });
+  }
+  for (let i = 1; i <= MAX_RESP; i++) {
+    const ne = o[`nec${i}_necesidad`];
+    if (String(ne == null ? "" : ne).trim() === "") continue;
+    out.necesidades.push({ necesidad: ne, fecha_pedido: o[`nec${i}_fecha_pedido`], respuesta: o[`nec${i}_respuesta`] });
   }
   return out;
 }
 
-function guardarRespuestas(d) {
-  const sh = hojaRespuestas();
+function leerRespuestas(semana) {
+  migrarRespuestas();
+  const sh = hoja("Respuestas", encabezadosRespuestas());
+  if (sh.getLastRow() < 2) return { repuestos: [], necesidades: [] };
   const data = sh.getDataRange().getValues();
-  const header = data[0];
-  const keep = [header];
-  // Conservar lo de otras semanas; descartar lo de esta (se reescribe).
+  const head = data[0];
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]) !== String(d.semana)) keep.push(data[i]);
+    if (String(data[i][1]) === String(semana)) return respuestasDeFila(filaObj(head, data[i]));
   }
-  const ts = new Date();
-  (d.repuestos || []).forEach((r) => {
-    keep.push([d.semana, "repuesto", r.dominio || "", r.repuesto || "", r.fecha_pedido || "", r.tiempo_estimado || "", "", "", ts]);
-  });
-  (d.necesidades || []).forEach((n) => {
-    keep.push([d.semana, "necesidad", "", "", n.fecha_pedido || "", "", n.necesidad || "", n.respuesta || "", ts]);
-  });
-  sh.clearContents();
-  sh.getRange(1, 1, keep.length, header.length).setValues(keep);
-  sh.setFrozenRows(1);
+  return { repuestos: [], necesidades: [] };
 }
 
-// Lista de respuestas cargadas, agrupadas por semana (para el historial).
-function historialRespuestas() {
-  const sh = hojaRespuestas();
-  if (sh.getLastRow() < 2) return [];
+function guardarRespuestas(d) {
+  migrarRespuestas();
+  const sh = hoja("Respuestas", encabezadosRespuestas());
+  const fila = filaRespuestas(d, new Date());
   const data = sh.getDataRange().getValues();
-  const map = {};
   for (let i = 1; i < data.length; i++) {
-    const sem = data[i][0];
-    if (!map[sem]) map[sem] = { semana: sem, timestamp: data[i][8], repuestos: [], necesidades: [] };
-    if (new Date(data[i][8]) > new Date(map[sem].timestamp)) map[sem].timestamp = data[i][8];
-    if (data[i][1] === "repuesto") {
-      map[sem].repuestos.push({ dominio: data[i][2], repuesto: data[i][3], fecha_pedido: data[i][4], tiempo_estimado: data[i][5] });
-    } else if (data[i][1] === "necesidad") {
-      map[sem].necesidades.push({ necesidad: data[i][6], respuesta: data[i][7], fecha_pedido: data[i][4] });
+    if (String(data[i][1]) === String(d.semana)) {
+      sh.getRange(i + 1, 1, 1, fila.length).setValues([fila]);
+      return;
     }
   }
-  const arr = Object.keys(map).map((k) => map[k]);
+  sh.appendRow(fila);
+}
+
+// Lista de respuestas cargadas (1 fila = 1 semana), más recientes primero.
+function historialRespuestas() {
+  migrarRespuestas();
+  const sh = hoja("Respuestas", encabezadosRespuestas());
+  if (sh.getLastRow() < 2) return [];
+  const data = sh.getDataRange().getValues();
+  const head = data[0];
+  const arr = [];
+  for (let i = 1; i < data.length; i++) {
+    const o = filaObj(head, data[i]);
+    const r = respuestasDeFila(o);
+    arr.push({ semana: o.semana, timestamp: o.timestamp, repuestos: r.repuestos, necesidades: r.necesidades });
+  }
   arr.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   return arr;
 }

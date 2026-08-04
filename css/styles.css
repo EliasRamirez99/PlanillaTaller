@@ -364,6 +364,17 @@ table.grid td input[data-edit] {
   width: 100%; border: 1px solid var(--azul-borde); background: #fff; padding: 5px 6px; border-radius: 4px;
 }
 
+/* ---- Resumen semanal completo ---- */
+.res-carga {
+  background: #fff; border: 1px solid var(--gris-borde); border-radius: 8px;
+  padding: 16px; margin-bottom: 16px;
+}
+.res-tit {
+  margin: 0 0 8px; color: var(--verde-osc); font-size: 15px;
+  border-bottom: 2px solid var(--verde); padding-bottom: 6px;
+}
+html.oscuro .res-carga { background: #1d2126; }
+
 /* ---- Paginador del historial ---- */
 .pager { display: flex; gap: 12px; justify-content: center; align-items: center; margin: 14px 0 4px; flex-wrap: wrap; }
 .pager-info { font-size: 13px; color: #666; }
