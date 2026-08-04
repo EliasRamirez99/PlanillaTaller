@@ -14,7 +14,7 @@
 
 const CONFIG = {
   // URL del Web App de Google Apps Script (termina en /exec)
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbx3yq5XB_ZwkKx2WakykBbYPwXhyulSmRePpLveUIgrJt_cQkDeOb1q9SntPfvPx-JF/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxs0Nu-EgPLvuYlUdNeyDRzOmUyWBjDlZ6nyRn0jd6aHeuFVJDMrwwalEl6B0oxvl-C/exec",
 
   // Camino alternativo cuando la red del trabajo bloquea script.google.com:
   // un relay en Vercel (api/proxy.js de este mismo repo) que reenvía a Google.
