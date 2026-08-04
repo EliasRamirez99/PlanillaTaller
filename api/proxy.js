@@ -12,7 +12,7 @@
    ============================================================ */
 
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyCcgTUM53v5rafjGQ6MBvkUEHRECLhloyLA5yQn5xM4Nd5AOD6I27K08kAnvJvl0Pc/exec";
+  "https://script.google.com/macros/s/AKfycbwe4jlFfJlQh84SfE6FUolz8EMvBabfDOC2iVkrcygTuxEuUG-SJzzRrB9dr_zfNFM/exec";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
