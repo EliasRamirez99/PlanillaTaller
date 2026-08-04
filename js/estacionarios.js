@@ -156,6 +156,7 @@
     if (!d.semana) return "Elegí la semana.";
     if (!d.ubicacion) return "Elegí la ubicación.";
     if (d.equipos.length === 0) return "Cargá al menos un equipo.";
+    if (d.equipos.length > 40) return "Se pueden guardar hasta 40 equipos por carga (tenés " + d.equipos.length + "). Sacá filas vacías o repetidas.";
     return null;
   }
 })();
