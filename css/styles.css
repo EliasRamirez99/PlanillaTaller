@@ -274,6 +274,26 @@ table.grid.est-tabla td.label { text-align: left; }
 table.grid.resp td input {
   border: 1px solid var(--azul-borde); background: #fff; padding: 6px; border-radius: 4px;
 }
+/* Columnas de respuesta (Tiempo estimado / Respuesta): anchas y con caja que
+   crece con el texto, porque acá es donde más se escribe. */
+table.grid.resp th.col-resp, table.grid.resp td.col-resp { width: 35%; min-width: 240px; }
+table.grid.resp td.col-resp textarea {
+  width: 100%; border: 1px solid var(--azul-borde); background: #fff; padding: 6px 8px;
+  border-radius: 4px; font: inherit; font-size: 13px; min-height: 44px;
+  resize: vertical; overflow: hidden; display: block;
+}
+
+/* ---- Observaciones (planillas) ---- */
+.card-form textarea.obs {
+  width: 100%; border: 1px solid var(--azul-borde); background: var(--azul-input);
+  border-radius: 6px; padding: 10px; font: inherit; font-size: 14px;
+  min-height: 74px; resize: vertical;
+}
+.obs-det { white-space: pre-wrap; border: 1px solid #ddd; border-radius: 6px; padding: 10px; background: #fafaf5; font-size: 13px; }
+
+/* Columna PDF del historial */
+table.grid.hist td.pdf { white-space: nowrap; color: var(--verde-osc, #46652a); font-weight: 600; cursor: pointer; }
+table.grid.hist td.pdf:hover { text-decoration: underline; }
 
 /* ---- Toolbar (inicio) ---- */
 .toolbar { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }

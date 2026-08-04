@@ -13,6 +13,7 @@
     poblarSemanas($("semana"));
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
     enlazarSemana("semana", "desde", "hasta");
+    if (!enEd) preseleccionarSemana("semana");
 
     const filasEquipos = LISTADOS.equiposEstacionarios.map((eq) => [eq, eq]);
     construirFilasEtiqueta("tabla-equipos", filasEquipos, COLS_EQ);
@@ -25,14 +26,31 @@
     });
 
     // Agregar un equipo que no está en la lista predefinida.
+    // Además de sumarlo a la tabla, se registra en el listado maestro para
+    // que aparezca solo en las próximas cargas (de todas las bases).
     $("add-equipo").addEventListener("click", function () {
       const n = $("nuevo-equipo").value.trim();
       if (!n) return;
       agregarEquipo(n);
+      registrarEquipoNuevo(n);
       $("nuevo-equipo").value = "";
     });
     tbEq.addEventListener("click", function (e) {
       if (e.target.classList.contains("row-del")) e.target.closest("tr").remove();
+    });
+
+    // Trae TODA la carga de la semana anterior de esta ubicación (equipos y cantidades).
+    $("prev-todo").addEventListener("click", function () {
+      const ub = ($("ubicacion").value || "").trim(), sem = $("semana").value;
+      if (!sem || !ub) { alert("Elegí primero la semana y la ubicación."); return; }
+      traerCargaAnterior("Estacionarios", sem, (s) => String(s.fila.ubicacion || "").trim() === ub).then((res) => {
+        if (!res.semanaAnt) { alert("No hay semana anterior."); return; }
+        if (!res.sub) { alert("No se encontró carga de " + ub + " en " + res.semanaAnt + "."); return; }
+        document.querySelectorAll("#tabla-equipos tbody input").forEach((i) => (i.value = ""));
+        volcarEquipos(res.sub.equipos || []);
+        const fp = res.sub.fila || {};
+        if (fp.cant_panoleros !== undefined && fp.cant_panoleros !== "") $("cant_panoleros").value = fp.cant_panoleros;
+      });
     });
 
     if (enEd) prefill(edicion);
@@ -41,8 +59,36 @@
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
       $("form").reset();
       $("desde").value = $("hasta").value = "";
+      preseleccionarSemana("semana");
     });
   });
+
+  // Vuelca cantidades sobre la grilla; agrega filas para equipos fuera del catálogo.
+  function volcarEquipos(equipos) {
+    const cat = LISTADOS.equiposEstacionarios || [];
+    (equipos || []).forEach((e) => {
+      let tr = Array.from(document.querySelectorAll("#tabla-equipos tbody tr")).find((x) => x.dataset.clave === e.equipo);
+      if (!tr && cat.indexOf(e.equipo) < 0) tr = agregarEquipo(e.equipo);
+      if (tr) { COLS_EQ.forEach((c) => { const inp = tr.querySelector(`input[data-col="${c}"]`); if (inp) inp.value = e[c] || ""; }); recalcTotal(tr); }
+    });
+  }
+
+  // Suma un equipo nuevo al listado maestro (Sheet cfg_listados) y a la caché local.
+  function registrarEquipoNuevo(nombre) {
+    const lista = LISTADOS.equiposEstacionarios = LISTADOS.equiposEstacionarios || [];
+    if (lista.some((e) => String(e).trim().toLowerCase() === nombre.toLowerCase())) return;
+    lista.push(nombre);
+    if (!CONFIG.APPS_SCRIPT_URL) return;
+    postReintento({ accion: "agregar_listado", sector: SECTOR, clave: claveSector(), tipo: "equiposEstacionarios", fila: [nombre] }, 3)
+      .then((o) => {
+        if (!o || !o.ok || !o.id) return;
+        const cache = listadosCache();
+        if (cache && cache.datos) {
+          (cache.datos.equiposEstacionarios = cache.datos.equiposEstacionarios || []).push({ id: o.id, fila: [nombre] });
+          try { localStorage.setItem("ops_listados", JSON.stringify(cache)); } catch (e) {}
+        }
+      });
+  }
 
   function prefill(ed) {
     document.querySelector(".titulo").textContent = "EDITANDO CARGA — EQUIPOS ESTACIONARIOS";
@@ -51,13 +97,8 @@
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
     $("ubicacion").value = f.ubicacion || "";
     $("cant_panoleros").value = f.cant_panoleros || "";
-
-    const cat = LISTADOS.equiposEstacionarios || [];
-    (ed.equipos || []).forEach((e) => {
-      let tr = Array.from(document.querySelectorAll("#tabla-equipos tbody tr")).find((x) => x.dataset.clave === e.equipo);
-      if (!tr && cat.indexOf(e.equipo) < 0) tr = agregarEquipo(e.equipo); // equipo fuera de la lista
-      if (tr) { COLS_EQ.forEach((c) => { const inp = tr.querySelector(`input[data-col="${c}"]`); if (inp) inp.value = e[c] || ""; }); recalcTotal(tr); }
-    });
+    $("observaciones").value = f.observaciones || "";
+    volcarEquipos(ed.equipos || []);
   }
 
   // Total = Operativa + No Operativa (vacío si no hay datos en la fila).
@@ -104,6 +145,7 @@
       hasta: $("hasta").value,
       ubicacion: $("ubicacion").value,
       cant_panoleros: $("cant_panoleros").value,
+      observaciones: $("observaciones").value.trim(),
       equipos: leerTablaEtiquetaArray("tabla-equipos", "equipo", COLS_EQ),
     };
     if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }

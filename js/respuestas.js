@@ -76,10 +76,10 @@
     if (!r.length) {
       html += '<p class="status">No hay repuestos en espera cargados para esta semana.</p>';
     } else {
-      html += '<table class="grid resp"><thead><tr><th>Origen</th><th>Dominio / Obra</th><th>Repuesto en espera</th><th>Fecha pedido</th><th>Tiempo estimado</th></tr></thead><tbody>';
+      html += '<table class="grid resp"><thead><tr><th>Origen</th><th>Dominio / Obra</th><th>Repuesto en espera</th><th>Fecha pedido</th><th class="col-resp">Tiempo estimado</th></tr></thead><tbody>';
       r.forEach((x, i) => {
         html += `<tr><td>${esc(x.origen)}</td><td>${esc(x.dominio)}</td><td>${esc(x.repuesto)}</td><td>${esc(formatearFecha(x.fecha_pedido))}</td>` +
-          `<td><input type="text" data-rep="${i}" value="${esc(x.tiempo_estimado)}" /></td></tr>`;
+          `<td class="col-resp"><textarea data-rep="${i}" rows="2">${esc(x.tiempo_estimado)}</textarea></td></tr>`;
       });
       html += "</tbody></table>";
     }
@@ -89,10 +89,10 @@
     if (!n.length) {
       html += '<p class="status">No hay necesidades cargadas para esta semana.</p>';
     } else {
-      html += '<table class="grid resp"><thead><tr><th>Necesidad</th><th>Origen</th><th>Fecha pedido</th><th>Respuesta</th></tr></thead><tbody>';
+      html += '<table class="grid resp"><thead><tr><th>Necesidad</th><th>Origen</th><th>Fecha pedido</th><th class="col-resp">Respuesta</th></tr></thead><tbody>';
       n.forEach((x, i) => {
         html += `<tr><td>${esc(x.necesidad)}</td><td>${esc(x.origen)}</td><td>${esc(x.fecha_pedido)}</td>` +
-          `<td><input type="text" data-nec="${i}" value="${esc(x.respuesta)}" /></td></tr>`;
+          `<td class="col-resp"><textarea data-nec="${i}" rows="2">${esc(x.respuesta)}</textarea></td></tr>`;
       });
       html += "</tbody></table>";
     }
@@ -104,6 +104,20 @@
     $("resp-planilla").innerHTML = html;
     const g = $("resp-guardar");
     if (g) g.addEventListener("click", guardar);
+
+    // Las cajas crecen solas con el texto (para que siempre se vea todo).
+    // También al recibir foco: si se renderizó con la pestaña oculta, el alto
+    // no se pudo calcular (scrollHeight = 0) y se acomoda recién acá.
+    document.querySelectorAll("#resp-planilla textarea").forEach((t) => {
+      autoAlto(t);
+      t.addEventListener("input", function () { autoAlto(this); });
+      t.addEventListener("focus", function () { autoAlto(this); });
+    });
+  }
+
+  function autoAlto(t) {
+    t.style.height = "auto";
+    t.style.height = Math.max(44, t.scrollHeight + 2) + "px";
   }
 
   // Trae lo ya respondido para la semana y lo completa en las tablas.
@@ -128,10 +142,10 @@
     if (!ACTUAL) return;
     const setStatus = hacerStatus($("resp-status"));
     // recoger lo escrito
-    document.querySelectorAll("#resp-planilla input[data-rep]").forEach((inp) => {
+    document.querySelectorAll("#resp-planilla [data-rep]").forEach((inp) => {
       ACTUAL.repuestos[+inp.dataset.rep].tiempo_estimado = inp.value.trim();
     });
-    document.querySelectorAll("#resp-planilla input[data-nec]").forEach((inp) => {
+    document.querySelectorAll("#resp-planilla [data-nec]").forEach((inp) => {
       ACTUAL.necesidades[+inp.dataset.nec].respuesta = inp.value.trim();
     });
 

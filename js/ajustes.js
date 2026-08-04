@@ -25,6 +25,10 @@
       { etq: "Ubicación", opts: () => UBIS }, { etq: "Obra" } ] },
     { tipo: "semanas", titulo: "Listado de Semanas", cols: [
       { etq: "Semana" }, { etq: "Desde", fecha: true }, { etq: "Hasta", fecha: true } ] },
+    // Sólo los equipos AGREGADOS desde la planilla de Estacionarios (la lista base
+    // vive en js/listados.js y no se puede borrar desde acá).
+    { tipo: "equiposEstacionarios", titulo: "Equipos Estacionarios (agregados)", cols: [
+      { etq: "Equipo" } ] },
   ];
 
   const cont = $("ajustes");
@@ -86,7 +90,10 @@
   async function cargar() {
     cont.innerHTML = '<p class="status">Cargando…</p>';
     if (!CONFIG.APPS_SCRIPT_URL) {
-      TIPOS.forEach((t) => { ESTADO[t.tipo] = (LISTADOS[t.tipo] || []).map((f) => ({ id: "demo-" + Math.random(), fila: f.slice() })); });
+      TIPOS.forEach((t) => {
+        ESTADO[t.tipo] = (LISTADOS[t.tipo] || []).map((f) =>
+          ({ id: "demo-" + Math.random(), fila: Array.isArray(f) ? f.slice() : [f] }));
+      });
       pintarTodo();
       return;
     }
@@ -94,7 +101,9 @@
       let r = await post({ accion: "listados" });
       if (r && r.ok && !r.seeded) {
         const base = {};
-        TIPOS.forEach((t) => (base[t.tipo] = LISTADOS[t.tipo] || []));
+        // equiposEstacionarios NO se siembra: la lista base vive en js/listados.js
+        // y en la Sheet sólo se guardan los agregados.
+        TIPOS.forEach((t) => { if (t.tipo !== "equiposEstacionarios") base[t.tipo] = LISTADOS[t.tipo] || []; });
         await post({ accion: "seed_listados", sector: "Admin", clave: sesion.clave, datos: base });
         r = await post({ accion: "listados" });
       }

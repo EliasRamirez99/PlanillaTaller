@@ -121,6 +121,28 @@ function enlazarSemana(selId, desdeId, hastaId) {
   });
 }
 
+// Preselecciona la semana que contiene la fecha de hoy (el usuario puede cambiarla).
+function preseleccionarSemana(selId) {
+  const sel = $(selId);
+  if (!sel || sel.value) return;
+  const hoy = new Date();
+  const t = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).getTime();
+  const aTiempo = (v) => {
+    const iso = fechaISO(v);
+    if (!iso) return NaN;
+    const p = iso.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+  };
+  const s = (LISTADOS.semanas || []).find((x) => {
+    const d = aTiempo(x[1]), h = aTiempo(x[2]);
+    return !isNaN(d) && !isNaN(h) && t >= d && t <= h;
+  });
+  if (s) {
+    sel.value = s[0];
+    sel.dispatchEvent(new Event("change"));
+  }
+}
+
 // ---------- Clave de sector / sesión ----------
 
 // Valida la clave contra el Apps Script. En modo demo (sin URL) acepta
@@ -133,12 +155,24 @@ async function validarClave(sector, clave) {
 }
 
 // Reemplaza en LISTADOS los tipos editables con la estructura {tipo:[{id,fila}]}.
+// Excepción: equiposEstacionarios es una lista de nombres y en la Sheet sólo viven
+// los AGREGADOS por los pañoleros → se MERGEAN con la lista base (no se reemplaza).
 function aplicarListados(estructura) {
   if (!estructura || typeof LISTADOS === "undefined") return;
   Object.keys(estructura).forEach((tipo) => {
-    if (Array.isArray(LISTADOS[tipo]) && Array.isArray(estructura[tipo])) {
-      LISTADOS[tipo] = estructura[tipo].map((e) => (e && e.fila ? e.fila : e));
+    if (!Array.isArray(LISTADOS[tipo]) || !Array.isArray(estructura[tipo])) return;
+    if (tipo === "equiposEstacionarios") {
+      const ya = LISTADOS[tipo].map((n) => String(n).trim().toLowerCase());
+      estructura[tipo].forEach((e) => {
+        const nombre = String((e && e.fila ? e.fila[0] : e) || "").trim();
+        if (nombre && ya.indexOf(nombre.toLowerCase()) < 0) {
+          LISTADOS[tipo].push(nombre);
+          ya.push(nombre.toLowerCase());
+        }
+      });
+      return;
     }
+    LISTADOS[tipo] = estructura[tipo].map((e) => (e && e.fila ? e.fila : e));
   });
 }
 

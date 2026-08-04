@@ -21,6 +21,7 @@
     $("dl-obras").innerHTML = (LISTADOS.obras || []).map((o) => `<option value="${o[1]}"></option>`).join("");
 
     enlazarSemana("semana", "desde", "hasta");
+    if (!enEd) preseleccionarSemana("semana");
     $("supervisor").addEventListener("change", function () {
       const s = (LISTADOS.supervisores || []).find((x) => x[0] === this.value);
       $("zona").value = s ? s[1] : "";
@@ -50,6 +51,7 @@
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
       $("form").reset();
       $("desde").value = $("hasta").value = $("zona").value = "";
+      preseleccionarSemana("semana");
     });
   });
 
@@ -61,6 +63,7 @@
     $("supervisor").value = f.supervisor || ""; $("supervisor").dispatchEvent(new Event("change"));
     $("zona").value = f.zona || "";
     $("referente").value = f.referente || "";
+    $("observaciones").value = f.observaciones || "";
     const conFecha = (arr) => (arr || []).map((it) => Object.assign({}, it, { fecha: fechaISO(it.fecha) }));
     llenarDinamica("tabla-obras", c.cObras, ed.obras || [], C_OBRAS);
     llenarDinamica("tabla-vehiculos", c.cVeh, ed.vehiculos || [], C_VEH);
@@ -91,6 +94,7 @@
       supervisor: $("supervisor").value,
       referente: $("referente").value,
       zona: $("zona").value,
+      observaciones: $("observaciones").value.trim(),
       obras: leerTabla("tabla-obras", C_OBRAS),
       vehiculos: leerTabla("tabla-vehiculos", C_VEH),
       repuestos: leerTabla("tabla-repuestos", C_REP),

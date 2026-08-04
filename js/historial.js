@@ -72,6 +72,18 @@
     return tabla(["Necesidad", "Fecha de pedido"], filas);
   }
 
+  function tercerizadosDesdeFila(f, n) {
+    const filas = [];
+    for (let i = 1; i <= n; i++) {
+      filas.push([f[`ter${i}_dominio`] || "", f[`ter${i}_razon`] || "", formatearFecha(f[`ter${i}_fecha`])]);
+    }
+    return tabla(["Dominio", "Razón", "Fecha"], filas);
+  }
+  function bloqueObs(f) {
+    const o = String(f.observaciones == null ? "" : f.observaciones).trim();
+    return o ? `<h4>Observaciones</h4><p class="obs-det">${esc(o)}</p>` : "";
+  }
+
   function detalleSupervisores(f) {
     let h = campos([
       ["Supervisor", f.supervisor], ["Ubicación", f.ubicacion], ["Taller", f.taller],
@@ -82,9 +94,11 @@
     ]);
     const rep = repuestosDesdeFila(f, 33);
     if (rep) h += `<h4>Repuestos en espera</h4>${rep}`;
+    const ter = tercerizadosDesdeFila(f, 33);
+    if (ter) h += `<h4>Tercerizado</h4>${ter}`;
     const nec = necesidadesDesdeFila(f, 33);
     if (nec) h += `<h4>Necesidades</h4>${nec}`;
-    return h;
+    return h + bloqueObs(f);
   }
 
   function detalleEstacionarios(sub) {
@@ -93,7 +107,7 @@
     const filas = (sub.equipos || []).map((e) => [e.equipo, e.operativa, e.no_operativa, e.total]);
     const t = tabla(["Equipo", "Operativa", "No Operativa", "Total"], filas);
     if (t) h += `<h4>Equipos</h4>${t}`;
-    return h;
+    return h + bloqueObs(f);
   }
 
   function detalleAlmacen(f) {
@@ -130,7 +144,7 @@
     if (rep) h += `<h4>Repuestos en espera</h4>${rep}`;
     const nec = necesidadesDesdeFila(f, 33);
     if (nec) h += `<h4>Necesidades</h4>${nec}`;
-    return h;
+    return h + bloqueObs(f);
   }
 
   const PAG = { Supervisores: "supervisores.html", Estacionarios: "estacionarios.html", Almacen: "almacen.html", Campo: "campo.html" };
@@ -146,22 +160,31 @@
     if (tr) h += `<h4>Espera de repuestos</h4>${tr}`;
     const tp = tabla(["Obra", "Necesidad", "Fecha de pedido"], (sub.pendientes || []).map((p) => [p.obra, p.pendiente, formatearFecha(p.fecha)]));
     if (tp) h += `<h4>Necesidades</h4>${tp}`;
-    return h;
+    return h + bloqueObs(f);
   }
 
-  function abrirDetalle(sub) {
+  // Datos de la carga (encabezado + detalle según planilla). Compartido por el
+  // modal "Ver" y la vista de impresión (PDF).
+  function cuerpoDetalle(sub) {
     const f = sub.fila;
-    let cuerpo =
-      `<h3>${esc(nombrePlanilla(sub.planilla))} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button></h3>` +
-      campos([
-        ["Cargado", fmtFecha(f.timestamp)],
-        ["Semana", f.semana],
-        ["Período", formatearFecha(f.desde) + (f.hasta ? " al " + formatearFecha(f.hasta) : "")],
-      ]);
+    let cuerpo = campos([
+      ["Cargado", fmtFecha(f.timestamp)],
+      ["Semana", f.semana],
+      ["Período", formatearFecha(f.desde) + (f.hasta ? " al " + formatearFecha(f.hasta) : "")],
+    ]);
     if (sub.planilla === "Supervisores") cuerpo += detalleSupervisores(f);
     else if (sub.planilla === "Estacionarios") cuerpo += detalleEstacionarios(sub);
     else if (sub.planilla === "Almacen") cuerpo += detalleAlmacen(f);
     else if (sub.planilla === "Campo") cuerpo += detalleCampo(sub);
+    return cuerpo;
+  }
+
+  function abrirDetalle(sub) {
+    const f = sub.fila;
+    const cuerpo =
+      `<h3>${esc(nombrePlanilla(sub.planilla))} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button>` +
+      ` <button type="button" class="ghost small" id="det-pdf">🖨 PDF</button></h3>` +
+      cuerpoDetalle(sub);
 
     $("detalle-body").innerHTML = cuerpo;
     $("detalle").style.display = "flex";
@@ -174,6 +197,48 @@
         location.href = PAG[sub.planilla];
       });
     }
+    const bp = $("det-pdf");
+    if (bp) bp.addEventListener("click", () => imprimirPDF(sub));
+  }
+
+  // ---------- PDF para imprimir ----------
+  function armarHTMLImpresion(sub) {
+    const f = sub.fila;
+    const titulo = `${nombrePlanilla(sub.planilla)} — ${f.semana || ""}`;
+    const estilos = `
+      * { box-sizing: border-box; }
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #222; margin: 24px; }
+      .enc { display: flex; align-items: center; gap: 10px; border-bottom: 3px solid #6a9739; padding-bottom: 8px; margin-bottom: 12px; }
+      .enc .logo { background: #6a9739; color: #fff; font-weight: bold; padding: 5px 10px; border-radius: 6px; font-size: 15px; }
+      .enc .emp { font-size: 13px; color: #555; }
+      h2 { font-size: 16px; margin: 6px 0 10px; text-transform: uppercase; }
+      h4 { font-size: 13px; margin: 14px 0 4px; color: #46652a; border-bottom: 1px solid #cfe0b8; padding-bottom: 2px; }
+      .kvs { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 6px 0; }
+      .kv span { color: #666; }
+      .kv b { margin-left: 4px; }
+      table.grid { border-collapse: collapse; width: 100%; margin: 4px 0; page-break-inside: auto; }
+      table.grid th, table.grid td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
+      table.grid th { background: #dfeccb; }
+      tr { page-break-inside: avoid; }
+      .obs-det { white-space: pre-wrap; border: 1px solid #ccc; border-radius: 4px; padding: 8px; background: #fafaf5; }
+      .pie { margin-top: 18px; font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 6px; }
+      @media print { body { margin: 10mm; } }
+    `;
+    return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title>` +
+      `<style>${estilos}</style></head><body>` +
+      `<div class="enc"><span class="logo">OPS</span><span class="emp">Oilfield Production Services</span></div>` +
+      `<h2>${esc(titulo)}</h2>` +
+      cuerpoDetalle(sub) +
+      `<div class="pie">Generado desde Planillas OPS — ${esc(fmtFecha(new Date().toISOString()))}</div>` +
+      `<script>window.onload = function () { window.print(); };<\/script>` +
+      `</body></html>`;
+  }
+
+  function imprimirPDF(sub) {
+    const w = window.open("", "_blank");
+    if (!w) { alert("El navegador bloqueó la ventana emergente. Permití pop-ups para esta página y probá de nuevo."); return; }
+    w.document.write(armarHTMLImpresion(sub));
+    w.document.close();
   }
 
   // ---------- lista ----------
@@ -226,10 +291,11 @@
         <td>${esc(f.semana || "")}</td>
         <td>${esc(quien(sub))}</td>
         <td class="ver">Ver ▸</td>
+        <td class="pdf" title="Imprimir / guardar PDF">🖨 PDF</td>
       </tr>`;
     }).join("");
     let html = `<table class="grid hist"><thead>
-      <tr><th>Cargado</th><th>Planilla</th><th>Semana</th><th>Detalle</th><th></th></tr>
+      <tr><th>Cargado</th><th>Planilla</th><th>Semana</th><th>Detalle</th><th></th><th></th></tr>
       </thead><tbody>${filas}</tbody></table>`;
     if (items.length > LIMITE) {
       html += `<div class="ver-mas"><button type="button" class="ghost small" id="hist-mas">Ver anteriores (${items.length - LIMITE} más)</button></div>`;
@@ -237,6 +303,11 @@
     cont.innerHTML = html;
     cont.querySelectorAll("tbody tr").forEach((tr) => {
       tr.addEventListener("click", () => abrirDetalle(visibles[+tr.dataset.i]));
+      const pdf = tr.querySelector("td.pdf");
+      if (pdf) pdf.addEventListener("click", (e) => {
+        e.stopPropagation();
+        imprimirPDF(visibles[+tr.dataset.i]);
+      });
     });
     const mas = $("hist-mas");
     if (mas) mas.addEventListener("click", () => { LIMITE += 30; pintarLista(FILTRADOS); });

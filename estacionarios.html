@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resumen Semanal — Equipos Estacionarios</title>
-  <link rel="stylesheet" href="css/styles.css?v=20260801" />
+  <link rel="stylesheet" href="css/styles.css?v=20260804" />
 </head>
 <body>
   <div class="wrap">
@@ -43,6 +43,9 @@
             <input type="number" id="cant_panoleros" min="0" />
           </div>
         </div>
+        <div style="margin-top:10px">
+          <button type="button" class="ghost small" id="prev-todo">↩ Cargar datos de la semana anterior</button>
+        </div>
       </div>
 
       <div class="card-form">
@@ -62,6 +65,13 @@
           <input type="text" id="nuevo-equipo" placeholder="Equipo que no está en la lista…" />
           <button type="button" class="ghost small" id="add-equipo">＋ Agregar equipo</button>
         </div>
+        <p class="auto-hint">Los equipos que agregues acá se suman solos al listado para las próximas semanas.</p>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="card-form">
+        <h2>Observaciones</h2>
+        <textarea id="observaciones" class="obs" rows="3" placeholder="Otros detalles o comentarios de la semana…"></textarea>
       </div>
 
       <div class="actions">
@@ -71,9 +81,9 @@
     </form>
   </div>
 
-  <script src="js/listados.js?v=20260801"></script>
-  <script src="js/config.js?v=20260801"></script>
-  <script src="js/common.js?v=20260801"></script>
-  <script src="js/estacionarios.js?v=20260801"></script>
+  <script src="js/listados.js?v=20260804"></script>
+  <script src="js/config.js?v=20260804"></script>
+  <script src="js/common.js?v=20260804"></script>
+  <script src="js/estacionarios.js?v=20260804"></script>
 </body>
 </html>

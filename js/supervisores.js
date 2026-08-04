@@ -6,6 +6,7 @@
 
   const SECTOR = "Taller";
   const COLS_REP = ["dominio", "repuesto", "tiempo"];
+  const COLS_TER = ["dominio", "razon", "fecha"];
   const edicion = leerEdicion();
   const enEd = !!(edicion && edicion.planilla === "Supervisores");
   let MECS = []; // mecánicos de la ubicación/taller elegidos (para "Ver listado")
@@ -14,6 +15,7 @@
     poblarSemanas($("semana"));
     poblarSelect($("supervisor"), LISTADOS.supervisores, (s) => s[0], (s) => s[0]);
     enlazarSemana("semana", "desde", "hasta");
+    if (!enEd) preseleccionarSemana("semana");
 
     $("supervisor").addEventListener("change", function () {
       const s = LISTADOS.supervisores.find((x) => x[0] === this.value);
@@ -24,22 +26,27 @@
     $("ver-mecanicos").addEventListener("click", abrirGestionMecanicos);
 
     const repCtrl = tablaDinamica("tabla-repuestos", COLS_REP, (n) => ($("espera_repuesto").value = n), 33, null, { tiempo: "date" });
+    const terCtrl = tablaDinamica("tabla-tercerizado", COLS_TER, (n) => { $("tercerizado").value = n; $("tercerizado_vista").value = n; }, 33, null, { fecha: "date" });
     const necCtrl = tablaDinamica("tabla-necesidades", ["necesidad", "fecha"], (n) => ($("necesidades_cant").value = n), 33, null, { fecha: "date" });
     wireAgregar("add-repuestos", repCtrl);
+    wireAgregar("add-tercerizado", terCtrl);
     wireAgregar("add-necesidades", necCtrl);
 
-    // Cargar repuestos/necesidades de la semana anterior (misma persona).
-    $("prev-repuestos").addEventListener("click", () => cargarAnterior(repCtrl, COLS_REP, leerRepsDeFila));
-    $("prev-necesidades").addEventListener("click", () => cargarAnterior(necCtrl, ["necesidad", "fecha"], leerNecsDeFila));
+    // Cargar repuestos/tercerizados/necesidades de la semana anterior (misma persona).
+    $("prev-repuestos").addEventListener("click", () => cargarAnterior("tabla-repuestos", repCtrl, COLS_REP, leerRepsDeFila));
+    $("prev-tercerizado").addEventListener("click", () => cargarAnterior("tabla-tercerizado", terCtrl, COLS_TER, leerTersDeFila));
+    $("prev-necesidades").addEventListener("click", () => cargarAnterior("tabla-necesidades", necCtrl, ["necesidad", "fecha"], leerNecsDeFila));
 
-    if (enEd) prefill(edicion.fila, repCtrl, necCtrl);
+    if (enEd) prefill(edicion.fila, repCtrl, necCtrl, terCtrl);
 
     conectarForm(recolectar, validar, function () {
       if (enEd) { limpiarEdicion(); alert("✅ Cambios guardados."); location.href = "index.html"; return; }
       $("form").reset();
       $("desde").value = $("hasta").value = $("ubicacion").value = $("taller").value = "";
       $("espera_repuesto").value = $("necesidades_cant").value = "0";
+      $("tercerizado").value = $("tercerizado_vista").value = "0";
       MECS = [];
+      preseleccionarSemana("semana");
     });
   });
 
@@ -85,7 +92,11 @@
       `<h4 class="mec-h4">Agregar mecánico</h4>` +
       `<p class="modal-nota">Buscá por nombre entre el resto de mecánicos y agregalo a tu taller.</p>` +
       `<input type="text" id="mec-buscar" class="mec-buscar" placeholder="Buscar por nombre…" />` +
-      `<table class="grid mec-tabla"><tbody id="mec-resto"></tbody></table>`;
+      `<table class="grid mec-tabla"><tbody id="mec-resto"></tbody></table>` +
+      `<h4 class="mec-h4">¿No está en ningún listado? Cargalo como nuevo</h4>` +
+      `<p class="modal-nota">Se agrega al listado general de mecánicos, en tu taller (${esc(U)} · ${esc(T)}).</p>` +
+      `<div class="add-row"><input type="text" id="mec-nuevo" placeholder="Apellido y nombre…" />` +
+      `<button type="button" class="primary small" id="mec-crear">＋ Crear nuevo</button></div>`;
     const body = modalHTML(html);
     const setM = hacerStatus(body.querySelector("#mec-status"));
     const tbAsig = body.querySelector("#mec-asig");
@@ -134,6 +145,36 @@
 
     pintarAsig(); pintarResto("");
 
+    // Crear un mecánico NUEVO (no existe en ningún listado) y sumarlo a este taller.
+    const bCrear = body.querySelector("#mec-crear");
+    const iNuevo = body.querySelector("#mec-nuevo");
+    bCrear.addEventListener("click", function () {
+      const nombre = norm(iNuevo.value);
+      if (!nombre) { setM("Escribí el nombre del mecánico.", "err"); return; }
+      const yaExiste = mec.find((m) => norm(m.fila[0]).toLowerCase() === nombre.toLowerCase());
+      if (yaExiste) {
+        const donde = [norm(yaExiste.fila[1]), norm(yaExiste.fila[2])].filter(Boolean).join(" · ") || "sin asignar";
+        setM("Ya existe \"" + yaExiste.fila[0] + "\" (" + donde + "). Buscalo arriba y agregalo desde ahí.", "err");
+        buscar.value = nombre; pintarResto(nombre);
+        return;
+      }
+      bCrear.disabled = true;
+      setM("Creando…", "");
+      crearMecanicoSrv(nombre, U, T).then(function (id) {
+        mec.push({ id: id, fila: [nombre, U, T] });
+        (LISTADOS.mecanicos = LISTADOS.mecanicos || []).push([nombre, U, T]);
+        try { localStorage.setItem("ops_listados", JSON.stringify(cache)); } catch (e) {}
+        recalcMecanicos();
+        iNuevo.value = "";
+        setM("✅ Mecánico creado y agregado a tu taller.", "ok");
+        pintarAsig(); pintarResto(buscar.value);
+        bCrear.disabled = false;
+      }).catch(function () {
+        setM("❌ No se pudo crear. Revisá tu internet y probá de nuevo.", "err");
+        bCrear.disabled = false;
+      });
+    });
+
     tbAsig.addEventListener("change", function (ev) {
       const sel = ev.target;
       if (!sel.matches("select[data-mec]")) return;
@@ -154,6 +195,16 @@
       .then(function (o) { if (!o || !o.ok) throw new Error((o && o.error) || "error"); });
   }
 
+  // Alta de un mecánico nuevo en el listado maestro (cfg_listados).
+  function crearMecanicoSrv(nombre, ubicacion, taller) {
+    if (!CONFIG.APPS_SCRIPT_URL) return Promise.resolve("demo-" + Date.now()); // demo
+    return postReintento({ accion: "agregar_listado", sector: SECTOR, clave: claveSector(), tipo: "mecanicos", fila: [nombre, ubicacion, taller] }, 3)
+      .then(function (o) {
+        if (!o || !o.ok) throw new Error((o && o.error) || "error");
+        return o.id;
+      });
+  }
+
   function leerRepsDeFila(f) {
     const r = [];
     for (let i = 1; i <= 33; i++) {
@@ -167,8 +218,16 @@
     for (let i = 1; i <= 33; i++) if (("" + (f["nec" + i] || "")).trim()) r.push({ necesidad: f["nec" + i], fecha: fechaISO(f["necfecha" + i]) });
     return r;
   }
+  function leerTersDeFila(f) {
+    const r = [];
+    for (let i = 1; i <= 33; i++) {
+      const dom = f["ter" + i + "_dominio"], raz = f["ter" + i + "_razon"], fec = f["ter" + i + "_fecha"];
+      if (("" + (dom || "")).trim() || ("" + (raz || "")).trim()) r.push({ dominio: dom, razon: raz, fecha: fechaISO(fec) });
+    }
+    return r;
+  }
 
-  function cargarAnterior(ctrl, cols, extractor) {
+  function cargarAnterior(tbodyId, ctrl, cols, extractor) {
     const sup = $("supervisor").value, sem = $("semana").value;
     if (!sem || !sup) { alert("Elegí primero la semana y el supervisor."); return; }
     traerCargaAnterior("Supervisores", sem, (s) => s.fila.supervisor === sup).then((res) => {
@@ -176,11 +235,11 @@
       if (!res.sub) { alert("No se encontró carga de " + sup + " en " + res.semanaAnt + "."); return; }
       const items = extractor(res.sub.fila);
       if (!items.length) { alert("La semana anterior no tenía datos para cargar."); return; }
-      llenarDinamica(cols === COLS_REP ? "tabla-repuestos" : "tabla-necesidades", ctrl, items, cols);
+      llenarDinamica(tbodyId, ctrl, items, cols);
     });
   }
 
-  function prefill(f, repCtrl, necCtrl) {
+  function prefill(f, repCtrl, necCtrl, terCtrl) {
     document.querySelector(".titulo").textContent = "EDITANDO CARGA — SUPERVISORES DE TALLER";
     document.querySelector("button.primary").textContent = "Guardar cambios";
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
@@ -191,9 +250,15 @@
     $("ordenes").value = f.ordenes || "";
     $("tareas").value = f.tareas || "";
     $("en_reparacion").value = f.en_reparacion || "";
-    $("tercerizado").value = f.tercerizado || "";
+    $("observaciones").value = f.observaciones || "";
     llenarDinamica("tabla-repuestos", repCtrl, leerRepsDeFila(f), COLS_REP);
+    llenarDinamica("tabla-tercerizado", terCtrl, leerTersDeFila(f), COLS_TER);
     llenarDinamica("tabla-necesidades", necCtrl, leerNecsDeFila(f), ["necesidad", "fecha"]);
+    // Cargas viejas (sin tabla de tercerizado): conservar el número que tenían.
+    if (!leerTersDeFila(f).length && f.tercerizado) {
+      $("tercerizado").value = f.tercerizado;
+      $("tercerizado_vista").value = f.tercerizado;
+    }
   }
 
   function recolectar() {
@@ -214,7 +279,9 @@
       tercerizado: $("tercerizado").value,
       espera_repuesto: $("espera_repuesto").value,
       necesidades_cant: $("necesidades_cant").value,
+      observaciones: $("observaciones").value.trim(),
       repuestos: leerTabla("tabla-repuestos", COLS_REP),
+      tercerizados: leerTabla("tabla-tercerizado", COLS_TER),
       necesidades: leerTabla("tabla-necesidades", ["necesidad", "fecha"]),
     };
     if (enEd) { d.accion = "editar_carga"; d.id = edicion.id; }
@@ -225,6 +292,7 @@
     if (!d.semana) return "Elegí la semana.";
     if (!d.supervisor) return "Elegí el supervisor.";
     if (faltaFechaEn("tabla-repuestos", ["dominio", "repuesto"], "tiempo")) return "Completá la fecha de pedido en todos los repuestos en espera.";
+    if (faltaFechaEn("tabla-tercerizado", ["dominio", "razon"], "fecha")) return "Completá la fecha en todos los tercerizados.";
     if (faltaFechaEn("tabla-necesidades", ["necesidad"], "fecha")) return "Completá la fecha de pedido en todas las necesidades.";
     return null;
   }

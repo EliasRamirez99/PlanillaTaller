@@ -30,6 +30,7 @@
     poblarSemanas($("semana"));
     poblarSelect($("ubicacion"), LISTADOS.obras, (o) => o[1], (o) => o[1]);
     enlazarSemana("semana", "desde", "hasta");
+    if (!enEd) preseleccionarSemana("semana");
     $("ubicacion").addEventListener("change", recalcPanoleros);
     $("ver-panoleros").addEventListener("click", abrirGestionPanoleros);
 
@@ -104,6 +105,7 @@
       $("necesidades_cant").value = "0";
       recalcTransf();
       PANS = [];
+      preseleccionarSemana("semana");
     });
   });
 
@@ -204,6 +206,7 @@
     document.querySelector("button.primary").textContent = "Guardar cambios";
     $("semana").value = f.semana || ""; $("semana").dispatchEvent(new Event("change"));
     $("ubicacion").value = f.ubicacion || "";
+    $("observaciones").value = f.observaciones || "";
     recalcPanoleros();
     if (f.cant_panoleros) $("cant_panoleros").value = f.cant_panoleros;
 
@@ -248,6 +251,7 @@
       movimientos: leerTablaEtiqueta("tabla-movimientos", COLS3),
       transferencias: leerTablaEtiqueta("tabla-transferencias", COLS3),
       necesidades_cant: $("necesidades_cant").value,
+      observaciones: $("observaciones").value.trim(),
       necesidades: leerTabla("tabla-necesidades", ["necesidad", "fecha"]),
       insumos: leerTabla("tabla-insumos", C_INS),
       vehiculos: leerTabla("tabla-vehiculos", C_VEH),

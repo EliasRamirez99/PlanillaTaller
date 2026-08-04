@@ -29,6 +29,7 @@ const CLAVES = {
 
 // Columnas reutilizadas.
 const REP = ["dominio", "repuesto", "tiempo"];            // repuestos en espera
+const TER = ["dominio", "razon", "fecha"];                // tercerizados (Supervisores)
 const INS = ["insumo", "cantidad"];                       // insumos utilizados (Almacén)
 const VEH = ["dominio", "asignacion", "km", "litros"];    // vehículos utilizados (Almacén)
 const COLS3 = ["total", "items", "repuestos"];            // movimientos / transferencias
@@ -46,7 +47,13 @@ const LISTADO_COLS = {
   panoleros: 4,    // nombre, ubicacion, obra, panol
   obras: 2,        // ubicacion, obra
   semanas: 3,      // semana, desde, hasta
+  equiposEstacionarios: 1, // nombre (sólo los agregados desde la planilla)
 };
+
+// Tipos de listado que las planillas pueden AGREGAR con su clave de sector
+// (mecánico nuevo desde Supervisores, equipo nuevo desde Estacionarios).
+// Editar y borrar siguen siendo sólo con clave Admin.
+const TIPOS_ALTA_SECTOR = ["mecanicos", "equiposEstacionarios"];
 
 function doPost(e) {
   try {
@@ -61,7 +68,12 @@ function doPost(e) {
 
     // --- acciones que requieren clave (sector, o Admin para Ajustes) ---
     const accionesAdmin = ["agregar_listado", "editar_listado", "borrar_listado", "seed_listados"];
-    const sectorClave = (accionesAdmin.indexOf(d.accion) >= 0) ? "Admin" : d.sector;
+    let sectorClave = (accionesAdmin.indexOf(d.accion) >= 0) ? "Admin" : d.sector;
+    // Excepción: las planillas pueden dar de alta ciertos listados con su clave de sector.
+    if (d.accion === "agregar_listado" && d.sector && d.sector !== "Admin" &&
+        TIPOS_ALTA_SECTOR.indexOf(d.tipo) >= 0) {
+      sectorClave = d.sector;
+    }
     const claveOk = CLAVES[sectorClave];
     if (!claveOk || d.clave !== claveOk) {
       return json({ ok: false, error: "clave" });
@@ -106,6 +118,9 @@ function encabezadosSupervisores() {
   for (let i = 1; i <= MAX_LISTA; i++) REP.forEach((c) => h.push(`rep${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`nec${i}`);
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`necfecha${i}`);
+  // Columnas nuevas SIEMPRE al final (para no desfasar las cargas viejas).
+  h.push("observaciones");
+  for (let i = 1; i <= MAX_LISTA; i++) TER.forEach((c) => h.push(`ter${i}_${c}`));
   return h;
 }
 
@@ -127,6 +142,11 @@ function filaSupervisores(d, ts) {
     const n = (d.necesidades && d.necesidades[i]) || {};
     fila.push(n.fecha || "");
   }
+  fila.push(d.observaciones || "");
+  for (let i = 0; i < MAX_LISTA; i++) {
+    const t = (d.tercerizados && d.tercerizados[i]) || {};
+    TER.forEach((c) => fila.push(t[c] || ""));
+  }
   return fila;
 }
 
@@ -137,12 +157,12 @@ function guardarSupervisores(d) {
 /* ---------- Estacionarios (1 fila por equipo cargado) ---------- */
 function encabezadosEstacionarios() {
   return ["timestamp", "semana", "desde", "hasta", "ubicacion", "cant_panoleros",
-    "equipo", "operativa", "no_operativa", "total"];
+    "equipo", "operativa", "no_operativa", "total", "observaciones"];
 }
 
 function filasEstacionarios(d, ts) {
   return (d.equipos || []).map((e) => [ts, d.semana, d.desde, d.hasta, d.ubicacion,
-    d.cant_panoleros, e.equipo, e.operativa, e.no_operativa, e.total]);
+    d.cant_panoleros, e.equipo, e.operativa, e.no_operativa, e.total, d.observaciones || ""]);
 }
 
 function guardarEstacionarios(d) {
@@ -162,6 +182,7 @@ function encabezadosAlmacen() {
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`necfecha${i}`);
   for (let i = 1; i <= MAX_LISTA; i++) VEH.forEach((c) => h.push(`veh${i}_${c}`));
   for (let i = 1; i <= MAX_LISTA; i++) h.push(`insunidad${i}`);
+  h.push("observaciones"); // columnas nuevas siempre al final
   return h;
 }
 
@@ -196,6 +217,7 @@ function filaAlmacen(d, ts) {
     const s = (d.insumos && d.insumos[i]) || {};
     fila.push(s.unidad || "");
   }
+  fila.push(d.observaciones || ""); // columnas nuevas siempre al final
   return fila;
 }
 
@@ -206,14 +228,14 @@ function guardarAlmacen(d) {
 /* ---------- Supervisores de Campo (1 fila por carga; listas como JSON) ---------- */
 function encabezadosCampo() {
   return ["timestamp", "semana", "desde", "hasta", "supervisor", "referente", "zona",
-    "obras", "vehiculos", "insumos", "repuestos", "pendientes"];
+    "obras", "vehiculos", "insumos", "repuestos", "pendientes", "observaciones"];
 }
 
 function filaCampo(d, ts) {
   return [ts, d.semana, d.desde, d.hasta, d.supervisor, d.referente, d.zona,
     JSON.stringify(d.obras || []), JSON.stringify(d.vehiculos || []),
     JSON.stringify(d.insumos || []), JSON.stringify(d.repuestos || []),
-    JSON.stringify(d.pendientes || [])];
+    JSON.stringify(d.pendientes || []), d.observaciones || ""];
 }
 
 function guardarCampo(d) {
@@ -293,6 +315,7 @@ function leerHistorial() {
           fila: {
             timestamp: o.timestamp, semana: o.semana, desde: o.desde,
             hasta: o.hasta, ubicacion: o.ubicacion, cant_panoleros: o.cant_panoleros,
+            observaciones: o.observaciones,
           },
           equipos: [],
         };
@@ -354,7 +377,7 @@ function estaSeedeado() {
 // Devuelve todos los listados agrupados, cada entrada con su id (para editar/borrar).
 function leerListados() {
   const sh = hojaListados();
-  const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [] };
+  const out = { supervisores: [], mecanicos: [], panoleros: [], obras: [], semanas: [], equiposEstacionarios: [] };
   if (sh.getLastRow() < 2) return out;
   const data = sh.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
