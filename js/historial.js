@@ -186,15 +186,22 @@
 
   function abrirDetalle(sub) {
     const f = sub.fila;
-    // Solo lectura: la carga/edición se hace ahora en la App de OPS. Queda el PDF
-    // para consultar/imprimir lo que se había cargado acá en su momento.
     const cuerpo =
-      `<h3>${esc(nombrePlanilla(sub.planilla))} <button type="button" class="ghost small" id="det-pdf">🖨 PDF</button></h3>` +
+      `<h3>${esc(nombrePlanilla(sub.planilla))} <button type="button" class="ghost small" id="det-editar">✎ Editar / corregir</button>` +
+      ` <button type="button" class="ghost small" id="det-pdf">🖨 PDF</button></h3>` +
       cuerpoDetalle(sub);
 
     $("detalle-body").innerHTML = cuerpo;
     $("detalle").style.display = "flex";
 
+    const be = $("det-editar");
+    if (be && PAG[sub.planilla]) {
+      be.addEventListener("click", () => {
+        const payload = Object.assign({}, sub, { id: f.timestamp });
+        sessionStorage.setItem("ops_edit", JSON.stringify(payload));
+        location.href = PAG[sub.planilla];
+      });
+    }
     const bp = $("det-pdf");
     if (bp) bp.addEventListener("click", () => imprimirPDF(sub));
   }

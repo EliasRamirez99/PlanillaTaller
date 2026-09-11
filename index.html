@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Planillas OPS — Mudado a la App de OPS</title>
-  <link rel="stylesheet" href="css/styles.css?v=20260911" />
+  <title>Planillas OPS — Carga Semanal</title>
+  <link rel="stylesheet" href="css/styles.css?v=20260810" />
 </head>
 <body>
   <div class="wrap">
@@ -13,28 +13,126 @@
       <span class="sub">Oilfield Production Services<br>Carga semanal de planillas</span>
     </div>
 
-    <!-- ===================== AVISO DE MUDANZA ===================== -->
-    <div class="aviso-migracion">
-      <h1>Esta página ya no se usa</h1>
-      <p>Las planillas semanales del taller ahora se cargan en la <b>App de OPS</b>.</p>
-      <p>Entrá al nuevo sitio para cargar tus datos de esta semana.</p>
-      <a class="btn-ir" href="https://gestion.opssrlapp.com/v2/taller/planillasSemanales">
-        Ir a la App de OPS para cargar →
-      </a>
-      <p class="aviso-sub">Guardá el nuevo enlace en tus favoritos. Esta página quedó solo para consultar lo que se había cargado acá en semanas anteriores.</p>
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="planillas">Planillas</button>
+      <button type="button" class="tab" data-tab="respuestas">Respuestas</button>
+      <button type="button" class="tab" data-tab="estadisticas">Estadísticas</button>
+      <button type="button" class="tab" data-tab="resumen">Resumen semanal</button>
     </div>
 
-    <!-- ===================== CONSULTA (solo lectura) ===================== -->
-    <div class="titulo" style="margin-top:8px">CONSULTA — PLANILLAS CARGADAS ACÁ EN SEMANAS ANTERIORES (SOLO LECTURA)</div>
-    <div class="hist-filtros">
-      <label>Semana <select id="filtro-semana"><option value="">Todas</option></select></label>
-      <label>Familia <select id="filtro-familia"><option value="">Todas</option></select></label>
-      <button type="button" class="ghost small" id="btn-recargar">↻ Actualizar</button>
-    </div>
-    <div class="status" id="historial-status">Cargando…</div>
-    <div id="historial"></div>
+    <!-- ===================== PESTAÑA PLANILLAS ===================== -->
+    <div class="tab-panel" id="panel-planillas">
+      <div class="titulo">SELECCIONÁ TU PLANILLA</div>
 
-    <!-- Modal de detalle (solo lectura) -->
+      <div class="cards">
+        <a class="card" href="supervisores.html">
+          <h3>Supervisores de Taller</h3>
+          <p>Estado del taller: órdenes, tareas, en reparación, repuestos en espera y necesidades.</p>
+          <span class="tag">Taller</span>
+        </a>
+
+        <a class="card" href="campo.html">
+          <h3>Supervisores de Campo</h3>
+          <p>Obras, vehículos, insumos, repuestos en espera y pendientes por zona.</p>
+          <span class="tag">Campo</span>
+        </a>
+
+        <a class="card" href="estacionarios.html">
+          <h3>Equipos Estacionarios</h3>
+          <p>Generadores, compresores, chulengos, etc. Total / disponible / en reparación.</p>
+          <span class="tag">Pañol</span>
+        </a>
+
+        <a class="card" href="almacen.html">
+          <h3>Resumen Almacén</h3>
+          <p>OR cargadas, remitos, transferencias y necesidades.</p>
+          <span class="tag">Almacén</span>
+        </a>
+      </div>
+
+      <!-- Pedido de clave SOLO para Ajustes -->
+      <div id="gate" class="gate" style="display:none">
+        <h3><span id="gate-title"></span></h3>
+        <p>Ingresá la clave de administración para continuar.</p>
+        <div class="field">
+          <label for="gate-clave">Clave de administración</label>
+          <input type="password" id="gate-clave" autocomplete="off" />
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" id="gate-go">Acceder</button>
+          <button type="button" class="ghost" id="gate-cancel">Cancelar</button>
+        </div>
+        <div class="status" id="gate-status"></div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" class="ghost" id="btn-ajustes">⚙ Ajustes (listados)</button>
+      </div>
+
+      <!-- Historial de planillas cargadas -->
+      <div class="titulo" style="margin-top:24px">HISTORIAL DE PLANILLAS CARGADAS</div>
+      <div class="hist-filtros">
+        <label>Semana <select id="filtro-semana"><option value="">Todas</option></select></label>
+        <label>Familia <select id="filtro-familia"><option value="">Todas</option></select></label>
+        <button type="button" class="ghost small" id="btn-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="historial-status">Cargando…</div>
+      <div id="historial"></div>
+    </div>
+
+    <!-- ===================== PESTAÑA RESPUESTAS ===================== -->
+    <div class="tab-panel" id="panel-respuestas" style="display:none">
+      <div class="titulo">RESPUESTAS DE ALMACÉN Y JEFATURA</div>
+      <div class="resp-filtro">
+        <label>Semana
+          <select id="resp-semana"><option value="">— Elegir semana —</option></select>
+        </label>
+      </div>
+      <div id="resp-planilla"></div>
+
+      <!-- Historial de respuestas cargadas -->
+      <div class="titulo" style="margin-top:24px">HISTORIAL DE RESPUESTAS CARGADAS</div>
+      <div class="hist-filtros">
+        <button type="button" class="ghost small" id="btn-recargar-resp">↻ Actualizar</button>
+      </div>
+      <div class="status" id="resp-historial-status">Cargando…</div>
+      <div id="resp-historial"></div>
+    </div>
+
+    <!-- ===================== PESTAÑA ESTADÍSTICAS ===================== -->
+    <div class="tab-panel" id="panel-estadisticas" style="display:none">
+      <div class="titulo">ESTADÍSTICAS — COMPARATIVO SEMANAL</div>
+      <div class="est-controls">
+        <div class="seg">
+          <button type="button" class="seg-btn active" data-amb="Almacen">Almacén</button>
+          <button type="button" class="seg-btn" data-amb="Supervisores">Sup. Taller</button>
+          <button type="button" class="seg-btn" data-amb="Campo">Sup. Campo</button>
+        </div>
+        <label id="est-f-ubic" style="display:none">Almacén <select id="est-ubic"></select></label>
+        <label id="est-f-taller" style="display:none">Taller <select id="est-taller"></select></label>
+        <label id="est-f-sup" style="display:none">Supervisor <select id="est-sup"></select></label>
+        <button type="button" class="ghost small" id="est-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="est-status"></div>
+      <div id="est-kpis"></div>
+      <div id="est-charts"></div>
+      <div id="est-tabla"></div>
+    </div>
+
+    <!-- ===================== PESTAÑA RESUMEN SEMANAL ===================== -->
+    <div class="tab-panel" id="panel-resumen" style="display:none">
+      <div class="titulo">RESUMEN SEMANAL COMPLETO</div>
+      <div class="hist-filtros">
+        <label>Semana <select id="res-semana"><option value="">— Elegir semana —</option></select></label>
+        <button type="button" class="ghost small" id="res-pdf">🖨 Descargar PDF completo</button>
+        <button type="button" class="ghost small" id="res-recargar">↻ Actualizar</button>
+      </div>
+      <div class="status" id="res-status"></div>
+      <div id="res-contenido"></div>
+    </div>
+
+    <!-- Modal de detalle (compartido) -->
     <div id="detalle" class="modal" style="display:none">
       <div class="modal-box">
         <button type="button" class="modal-close" id="detalle-close" title="Cerrar">×</button>
@@ -43,9 +141,13 @@
     </div>
   </div>
 
-  <script src="js/listados.js?v=20260911"></script>
-  <script src="js/config.js?v=20260911"></script>
-  <script src="js/common.js?v=20260911"></script>
-  <script src="js/historial.js?v=20260911"></script>
+  <script src="js/listados.js?v=20260810"></script>
+  <script src="js/config.js?v=20260810"></script>
+  <script src="js/common.js?v=20260810"></script>
+  <script src="js/index.js?v=20260810"></script>
+  <script src="js/historial.js?v=20260810"></script>
+  <script src="js/respuestas.js?v=20260810"></script>
+  <script src="js/estadisticas.js?v=20260810"></script>
+  <script src="js/resumen.js?v=20260810"></script>
 </body>
 </html>

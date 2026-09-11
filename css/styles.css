@@ -189,23 +189,6 @@ tr .row-del {
 .mec-cur { font-size: 12px; color: #888; }
 .mec-add { white-space: nowrap; }
 
-/* ---- Aviso de mudanza a la App de OPS (inicio) ---- */
-.aviso-migracion {
-  background: #fff; border: 2px solid var(--verde-osc); border-radius: 12px;
-  padding: 28px 22px; text-align: center; margin-bottom: 22px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.06);
-}
-.aviso-migracion h1 { margin: 0 0 8px; font-size: 22px; color: var(--verde-osc); }
-.aviso-migracion p { margin: 6px auto; font-size: 15px; max-width: 560px; }
-.aviso-migracion .aviso-sub { font-size: 13px; color: #777; margin-top: 12px; }
-.btn-ir {
-  display: inline-block; margin: 16px 0 4px; background: var(--verde-osc); color: #fff;
-  text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 30px; border-radius: 8px;
-}
-.btn-ir:hover { background: #5e9a3a; }
-html.oscuro .aviso-migracion { background: #1d2126; }
-html.oscuro .aviso-migracion .aviso-sub { color: #9aa4af; }
-
 /* ---- "Ver anteriores" (paginación de historiales) ---- */
 .ver-mas { text-align: center; margin: 12px 0; }
 
