@@ -3,118 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resumen Semanal — Supervisores de Campo</title>
-  <link rel="stylesheet" href="css/styles.css?v=20260810" />
+  <title>Redirigiendo a la App de OPS…</title>
+  <meta http-equiv="refresh" content="0; url=https://gestion.opssrlapp.com/v2/taller/planillasSemanales" />
+  <script>window.location.replace("https://gestion.opssrlapp.com/v2/taller/planillasSemanales");</script>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f8; color: #1f2937; margin: 0;
+      display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; }
+    .redir { background: #fff; border: 1px solid #c9c9c9; border-radius: 12px; padding: 30px 26px;
+      max-width: 460px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .redir h1 { color: #70ad47; font-size: 20px; margin: 0 0 10px; }
+    .redir p { font-size: 15px; margin: 8px 0 18px; }
+    .redir a { display: inline-block; background: #70ad47; color: #fff; text-decoration: none;
+      font-weight: 700; padding: 13px 26px; border-radius: 8px; }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="brand">
-      <span class="logo">OPS</span>
-      <span class="sub">Oilfield Production Services</span>
-    </div>
-
-    <a class="back" href="index.html">&larr; Volver</a>
-    <div class="titulo">PLANILLA DE RESUMEN SEMANAL — SUPERVISORES DE CAMPO</div>
-
-    <form id="form">
-      <div class="card-form">
-        <h2>Datos generales</h2>
-        <div class="grid3">
-          <div class="field">
-            <label for="semana">Semana *</label>
-            <select id="semana"><option value="">— Elegir —</option></select>
-          </div>
-          <div class="field">
-            <label for="desde">Desde</label>
-            <input type="text" id="desde" readonly />
-          </div>
-          <div class="field">
-            <label for="hasta">Hasta</label>
-            <input type="text" id="hasta" readonly />
-          </div>
-        </div>
-        <div class="grid3" style="margin-top:10px">
-          <div class="field">
-            <label for="supervisor">Supervisor *</label>
-            <select id="supervisor"><option value="">— Elegir —</option></select>
-          </div>
-          <div class="field">
-            <label for="referente">Referente</label>
-            <input type="text" id="referente" />
-          </div>
-          <div class="field">
-            <label for="zona">Zona</label>
-            <input type="text" id="zona" readonly />
-          </div>
-        </div>
-      </div>
-
-      <div class="card-form">
-        <h2>Obras</h2>
-        <table class="grid" id="tabla-obras">
-          <thead>
-            <tr><th>N°</th><th>Obra</th><th>N° Órdenes Realizadas</th><th>N° Tareas / Trabajos</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <button type="button" class="ghost small" id="add-obras">＋ Agregar obra</button>
-        <button type="button" class="ghost small" id="prev-obras">↩ Cargar de la semana anterior</button>
-      </div>
-
-      <div class="card-form">
-        <h2>Vehículos utilizados</h2>
-        <table class="grid" id="tabla-vehiculos">
-          <thead>
-            <tr><th>N°</th><th>Dominio</th><th>Asignación</th><th>Km</th><th>Litros</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <button type="button" class="ghost small" id="add-vehiculos">＋ Agregar vehículo</button>
-        <button type="button" class="ghost small" id="prev-vehiculos">↩ Cargar de la semana anterior</button>
-      </div>
-
-      <div class="card-form">
-        <h2>Espera de repuestos</h2>
-        <table class="grid" id="tabla-repuestos">
-          <thead>
-            <tr><th>N°</th><th>Obra</th><th>Repuesto</th><th>Fecha de pedido</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <button type="button" class="ghost small" id="add-repuestos">＋ Agregar repuesto</button>
-        <button type="button" class="ghost small" id="prev-repuestos">↩ Cargar de la semana anterior</button>
-      </div>
-
-      <div class="card-form">
-        <h2>Necesidades</h2>
-        <table class="grid" id="tabla-pendientes">
-          <thead>
-            <tr><th>N°</th><th>Obra</th><th>Necesidad</th><th>Fecha de pedido</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <button type="button" class="ghost small" id="add-pendientes">＋ Agregar pendiente</button>
-        <button type="button" class="ghost small" id="prev-pendientes">↩ Cargar de la semana anterior</button>
-      </div>
-
-      <!-- Observaciones -->
-      <div class="card-form">
-        <h2>Observaciones</h2>
-        <textarea id="observaciones" class="obs" rows="3" placeholder="Otros detalles o comentarios de la semana…"></textarea>
-      </div>
-
-      <div class="actions">
-        <button type="submit" class="primary">Enviar</button>
-      </div>
-      <div class="status" id="status"></div>
-
-      <datalist id="dl-obras"></datalist>
-    </form>
+  <div class="redir">
+    <h1>Esta planilla se mudó a la App de OPS</h1>
+    <p>Las planillas semanales del taller ahora se cargan en la App de OPS. Te estamos llevando ahí…</p>
+    <a href="https://gestion.opssrlapp.com/v2/taller/planillasSemanales">Abrir la App de OPS →</a>
   </div>
-
-  <script src="js/listados.js?v=20260810"></script>
-  <script src="js/config.js?v=20260810"></script>
-  <script src="js/common.js?v=20260810"></script>
-  <script src="js/campo.js?v=20260810"></script>
 </body>
 </html>
