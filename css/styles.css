@@ -43,6 +43,23 @@ body {
 }
 .brand .sub { font-size: 12px; color: #555; }
 
+/* ---- Aviso "preferí la App de OPS" (no bloqueante, en todas las páginas) ---- */
+.ops-aviso {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  background: #fff7e6; border: 1px solid #f0d090; border-left: 4px solid var(--verde-osc);
+  border-radius: 8px; padding: 12px 16px; margin: 0 16px 16px;
+}
+.ops-aviso-txt { flex: 1 1 320px; font-size: 14px; color: #7a5b12; line-height: 1.45; }
+.ops-aviso-txt b { color: #5f4708; }
+.ops-aviso-link {
+  background: var(--verde-osc); color: #fff; text-decoration: none; font-weight: 700;
+  font-size: 14px; padding: 9px 16px; border-radius: 6px; white-space: nowrap;
+}
+.ops-aviso-link:hover { background: #5e9a3a; }
+html.oscuro .ops-aviso { background: #2c2618; border-color: #5d4c22; }
+html.oscuro .ops-aviso-txt { color: #d8c289; }
+html.oscuro .ops-aviso-txt b { color: #ead9a8; }
+
 .titulo {
   background: var(--verde);
   text-align: center;
@@ -188,23 +205,6 @@ tr .row-del {
 .mec-acc { text-align: right; white-space: nowrap; width: 34%; }
 .mec-cur { font-size: 12px; color: #888; }
 .mec-add { white-space: nowrap; }
-
-/* ---- Aviso de mudanza a la App de OPS (inicio) ---- */
-.aviso-migracion {
-  background: #fff; border: 2px solid var(--verde-osc); border-radius: 12px;
-  padding: 28px 22px; text-align: center; margin-bottom: 22px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.06);
-}
-.aviso-migracion h1 { margin: 0 0 8px; font-size: 22px; color: var(--verde-osc); }
-.aviso-migracion p { margin: 6px auto; font-size: 15px; max-width: 560px; }
-.aviso-migracion .aviso-sub { font-size: 13px; color: #777; margin-top: 12px; }
-.btn-ir {
-  display: inline-block; margin: 16px 0 4px; background: var(--verde-osc); color: #fff;
-  text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 30px; border-radius: 8px;
-}
-.btn-ir:hover { background: #5e9a3a; }
-html.oscuro .aviso-migracion { background: #1d2126; }
-html.oscuro .aviso-migracion .aviso-sub { color: #9aa4af; }
 
 /* ---- "Ver anteriores" (paginación de historiales) ---- */
 .ver-mas { text-align: center; margin: 12px 0; }

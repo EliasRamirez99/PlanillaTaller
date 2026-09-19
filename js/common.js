@@ -510,3 +510,20 @@ function aplicarTema() {
   brand.appendChild(b);
   aplicarTema(); // ahora con el botón creado, para setear su ícono
 })();
+
+// ---------- Aviso: preferir la App de OPS, pero esta página sigue disponible ----------
+// Se inyecta arriba de todo en TODAS las páginas (inicio y formularios). La página
+// NO queda bloqueada: si no pueden cargar en la App de OPS, cargan acá con normalidad.
+const OPS_URL = "https://gestion.opssrlapp.com/v2/taller/planillasSemanales";
+
+(function montarAvisoOPS() {
+  const brand = document.querySelector(".brand");
+  if (!brand || document.querySelector(".ops-aviso")) return;
+  const div = document.createElement("div");
+  div.className = "ops-aviso";
+  div.innerHTML =
+    '<span class="ops-aviso-txt"><b>Estas planillas ahora se cargan en la App de OPS.</b> ' +
+    'Si no podés entrar ahí, seguí cargando desde esta página con normalidad.</span>' +
+    '<a class="ops-aviso-link" href="' + OPS_URL + '" target="_blank" rel="noopener">Ir a la App de OPS →</a>';
+  brand.insertAdjacentElement("afterend", div);
+})();
